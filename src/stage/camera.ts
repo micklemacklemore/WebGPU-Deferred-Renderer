@@ -7,7 +7,10 @@ class CameraUniforms {
     private readonly floatView = new Float32Array(this.buffer);
 
     set viewProjMat(mat: Float32Array) {
-        // TODO-1.1: set the first 16 elements of `this.floatView` to the input `mat`
+        // TODO-1.1 DONE: set the first 16 elements of `this.floatView` to the input `mat`
+        for (let i = 0; i < mat.length; i++) {
+            this.floatView[i] = mat[i]; 
+        }
     }
 
     // TODO-2: add extra functions to set values needed for light clustering here
@@ -15,7 +18,7 @@ class CameraUniforms {
 
 export class Camera {
     uniforms: CameraUniforms = new CameraUniforms();
-    uniformsBuffer: GPUBuffer;
+    uniformsGPUBuffer: GPUBuffer;
 
     projMat: Mat4 = mat4.create();
     cameraPos: Vec3 = vec3.create(-7, 2, 0);
@@ -33,11 +36,16 @@ export class Camera {
     keys: { [key: string]: boolean } = {};
 
     constructor () {
-        // TODO-1.1: set `this.uniformsBuffer` to a new buffer of size `this.uniforms.buffer.byteLength`
+        // TODO-1.1 DONE: set `this.uniformsBuffer` to a new buffer of size `this.uniforms.buffer.byteLength`
         // ensure the usage is set to `GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST` since we will be copying to this buffer
         // check `lights.ts` for examples of using `device.createBuffer()`
         //
         // note that you can add more variables (e.g. inverse proj matrix) to this buffer in later parts of the assignment
+        
+        this.uniformsGPUBuffer = device.createBuffer({
+            size: this.uniforms.buffer.byteLength,
+            usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
+        }); 
 
         this.projMat = mat4.perspective(toRadians(fovYDegrees), aspectRatio, Camera.nearPlane, Camera.farPlane);
 
@@ -128,11 +136,13 @@ export class Camera {
         const lookPos = vec3.add(this.cameraPos, vec3.scale(this.cameraFront, 1));
         const viewMat = mat4.lookAt(this.cameraPos, lookPos, [0, 1, 0]);
         const viewProjMat = mat4.mul(this.projMat, viewMat);
-        // TODO-1.1: set `this.uniforms.viewProjMat` to the newly calculated view proj mat
+        // TODO-1.1 DONE: set `this.uniforms.viewProjMat` to the newly calculated view proj mat
+        this.uniforms.viewProjMat = viewProjMat; 
 
         // TODO-2: write to extra buffers needed for light clustering here
 
-        // TODO-1.1: upload `this.uniforms.buffer` (host side) to `this.uniformsBuffer` (device side)
+        // TODO-1.1 DONE: upload `this.uniforms.buffer` (host side) to `this.uniformsBuffer` (device side)
         // check `lights.ts` for examples of using `device.queue.writeBuffer()`
+        device.queue.writeBuffer(this.uniformsGPUBuffer, 0, this.uniforms.buffer); 
     }
 }
