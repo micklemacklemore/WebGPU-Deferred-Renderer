@@ -19,7 +19,7 @@ Follow these steps to install and view the project:
 - Clone this repository
 - Download and install [Node.js](https://nodejs.org/en/)
 - Run `npm install` in the root directory of this project to download and install dependencies
-- Run `npm dev`, which will open the project in your browser
+- Run `npm run dev`, which will open the project in your browser
   - The project will automatically reload when you edit any of the files
 
 ### Notes:
@@ -32,6 +32,13 @@ Follow these steps to install and view the project:
   - If you have problems running the starter code, use Chrome and make sure you have updated your browser and video drivers.
   - Remember to follow steps from [Project 0](https://github.com/CIS5650-Fall-2024/Project0-Getting-Started/blob/main/INSTRUCTION.md#part-23-project-instructions---webgpu) if needed.
 - Ensure that the `Adapter Info -> Description` on https://webgpureport.org/, is your main GPU. Often your low-powered GPU will be selected as default. To make a permanent switch, use your OS's GPU Settings to make the GPU default for your browser.
+
+### Debugging Tools
+
+- You can use the standard console debugger in the browser’s developer tools to inspect and debug your code.
+- Additionally, you can utilize the [Chrome WebGPU Developer Tools extension](https://chromewebstore.google.com/detail/webgpu-devtools/ckabpgjkjmbkfmichbbgcgbelkbbpopi) to capture frames and inspect detailed GPU-related information.
+  - Once you have installed the extension in Chrome, access the WebGPU panel by navigating to: **Developer Tools -> More Tools -> WebGPU**.
+  - Please note that the extension is currently in an unstable state. If the reset button doesn't function as expected, try reopening the tab to refresh the panel.
 
 ### GitHub Pages setup
 
@@ -100,7 +107,7 @@ When adding new buffers, especially if they contain new structs, their alignment
 
 For full credit, you must show a good optimization effort and record the performance of each version you test.
 
-### Extra Credit: Post Processing (+3)
+#### Extra Credit: Post Processing (+5)
 
 Implement one of the following post-processing effects:
 - Bloom using post-process blur (box or Gaussian)
@@ -108,11 +115,11 @@ Implement one of the following post-processing effects:
 
 For full credit, you must create a new compute pass (not a fullscreen rendering pass) for post-processing.
 
-### Extra Credit: G-buffer Optimization (+7)
+#### Extra Credit: G-buffer Optimization (+10)
 
-Use a single compute pass to replace the vertex + fragment shader fullscreen rendering pass you are provided in the base code. (+3)
+Use a single compute pass to replace the vertex + fragment shader fullscreen rendering pass you are provided in the base code. (+5)
 
-Optimize the G-buffer used for the Clustered Deferred renderer. In particular, aim to reduce the amount of textures and the size of per-pixel data. You will receive full points if your G-buffer uses only one color output image and each pixel stores additional data less than or equal to one `vec4f`. (+4) 
+Optimize the G-buffer used for the Clustered Deferred renderer. In particular, aim to reduce the amount of textures and the size of per-pixel data. You will receive full points if your G-buffer uses only one color output image and each pixel stores additional data less than or equal to one `vec4f`. (+5) 
 
 Here are some ideas to get you started:
 
@@ -125,7 +132,7 @@ Here are some ideas to get you started:
 - Reduce the number of properties passed via the G-buffer
   - For example, instead of storing world position in a texture, reconstruct it using camera matrices and depth
 
-### Extra Credit: Visibility Buffer (+15)
+#### Extra Credit: Visibility Buffer (+15)
 
 For devices with limited GPU bandwidth, we can try to further reduce the memory footprint of the geometry pass. This can be done by using a single channel `u32` buffer for shading. Here are some hints to do that:
 
@@ -141,6 +148,10 @@ For more reference, please refer to the following materials:
 
 - [The Visibility Buffer: A Cache-Friendly Approach to Deferred Shading (JCGT)](https://jcgt.org/published/0002/02/04/)
 - [Visibility Buffer Rendering with Material Graphs – Filmic Worlds](http://filmicworlds.com/blog/visibility-buffer-rendering-with-material-graphs/)
+
+#### Extra Credit: Render Bundles (+5)
+
+Use [render bundles](https://toji.dev/webgpu-best-practices/render-bundles.html) to reduce the overhead of host-side draw calls. Make sure you provide a performance analysis showing the effect of this change.
 
 ## Performance Analysis
 
