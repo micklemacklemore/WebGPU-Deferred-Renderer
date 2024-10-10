@@ -28,7 +28,10 @@ export class Lights {
     moveLightsComputeBindGroup: GPUBindGroup;
     moveLightsComputePipeline: GPUComputePipeline;
 
-    // TODO-2: add layouts, pipelines, textures, etc. needed for light clustering here
+    // TODO-2 DONE: add layouts, pipelines, textures, etc. needed for light clustering here
+    lightClusteringBindGroupLayout: GPUBindGroupLayout;
+    lightClusteringComputeBindGroup: GPUBindGroup;
+    lightClusteringComputePipeline: GPUComputePipeline;
 
     constructor(camera: Camera) {
         this.camera = camera;
@@ -38,6 +41,8 @@ export class Lights {
             size: 16 + this.lightsArray.byteLength, // 16 for numLights + padding
             usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST
         });
+
+        // populate the light set storage buffer
         this.populateLightsBuffer();
         this.updateLightSetUniformNumLights();
 
