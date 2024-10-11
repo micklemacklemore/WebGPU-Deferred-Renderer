@@ -3,7 +3,7 @@ import { toRadians } from "../math_util";
 import { device, canvas, fovYDegrees, aspectRatio } from "../renderer";
 
 class CameraUniforms {
-    readonly buffer = new ArrayBuffer(16 * 4);
+    readonly buffer = new ArrayBuffer(20 * 4);
     private readonly floatView = new Float32Array(this.buffer);
 
     set viewProjMat(mat: Float32Array) {
@@ -14,6 +14,13 @@ class CameraUniforms {
     }
 
     // TODO-2: add extra functions to set values needed for light clustering here
+    set canvasWidth(width: number) {
+        this.floatView[16] = width; 
+    }
+
+    set canvasHeight(height: number) {
+        this.floatView[17] = height; 
+    }
 }
 
 export class Camera {
@@ -43,6 +50,7 @@ export class Camera {
         // note that you can add more variables (e.g. inverse proj matrix) to this buffer in later parts of the assignment
         
         this.uniformsGPUBuffer = device.createBuffer({
+            label: "Camera GPU Buffer",
             size: this.uniforms.buffer.byteLength,
             usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
         }); 
@@ -58,6 +66,11 @@ export class Camera {
         canvas.addEventListener('mousedown', () => canvas.requestPointerLock());
         canvas.addEventListener('mouseup', () => document.exitPointerLock());
         canvas.addEventListener('mousemove', (event) => this.onMouseMove(event));
+
+        // set canvas width and size, this won't change while running
+        // but if we want to support canvas resizing we could make this dynamic(?)
+        this.uniforms.canvasWidth = canvas.width; 
+        this.uniforms.canvasHeight = canvas.height; 
     }
 
     private onKeyEvent(event: KeyboardEvent, down: boolean) {

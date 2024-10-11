@@ -15,7 +15,6 @@ export class ForwardPlusRenderer extends renderer.Renderer {
     pipeline : GPURenderPipeline; 
 
     constructor(stage: Stage) {
-
         // TODO-2: initialize layouts, pipelines, textures, etc. needed for Forward+ here
         super(stage);
 
@@ -23,7 +22,7 @@ export class ForwardPlusRenderer extends renderer.Renderer {
             label: "forward scene uniforms bind group layout",
             entries: [
                 // TODO-1.2 DONE: add an entry for camera uniforms at binding 0, visible to only the vertex shader, and of type "uniform"
-                {
+                { // camera uniforms
                     binding: 0,
                     visibility: GPUShaderStage.VERTEX,
                     buffer: { type: "uniform" }
@@ -141,7 +140,8 @@ export class ForwardPlusRenderer extends renderer.Renderer {
 
         renderPass.end(); 
 
-        renderer.device.queue.submit([encoder.finish()]); 
+        this.lights.doLightClustering(encoder); 
 
+        renderer.device.queue.submit([encoder.finish()]); 
     }
 }
