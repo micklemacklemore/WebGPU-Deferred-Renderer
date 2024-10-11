@@ -101,6 +101,17 @@ export const vertexBufferLayout: GPUVertexBufferLayout = {
     ]
 };
 
+export const vertexBufferLineLayout: GPUVertexBufferLayout = {
+    arrayStride: 12,
+    attributes: [
+        {   // pos
+            format: "float32x3",
+            offset: 0,
+            shaderLocation: 0
+        }
+    ]
+}
+
 export abstract class Renderer {
     protected scene: Scene;
     protected lights: Lights;
