@@ -39,6 +39,9 @@ export class Camera {
     static readonly nearPlane = 0.1;
     static readonly farPlane = 1000;
 
+    nearPlane: number = Camera.nearPlane; 
+    farPlane: number = Camera.farPlane; 
+
     keys: { [key: string]: boolean } = {};
 
     constructor () {
