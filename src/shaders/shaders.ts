@@ -27,9 +27,12 @@ export const constants = {
     bindGroup_model: 1,
     bindGroup_material: 2,
     // thread size for each block
-    clusterWorkGroupSize: 4,
-    moveLightsWorkgroupSize: 128,
+    clusterNumThreadsPerWorkgroup: 4,
+    clusterX: 16,
+    clusterY: 9,
+    clusterZ: 24,
 
+    moveLightsWorkgroupSize: 128,
     lightRadius: 2
 };
 

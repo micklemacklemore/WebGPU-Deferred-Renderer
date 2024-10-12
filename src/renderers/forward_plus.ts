@@ -96,11 +96,11 @@ export class ForwardPlusRenderer extends renderer.Renderer {
     }
 
     override draw() {
-        // TODO-2: run the Forward+ rendering pass:
         const encoder = renderer.device.createCommandEncoder();
         const canvasTextureView = renderer.context.getCurrentTexture().createView();
 
         // - run the clustering compute shader
+        this.lights.doLightClustering(encoder); 
 
         // - run the main rendering pass, using the computed clusters for efficient lighting
         const renderPassDescriptor : GPURenderPassDescriptor = {
@@ -137,10 +137,7 @@ export class ForwardPlusRenderer extends renderer.Renderer {
             renderPass.drawIndexed(primitive.numIndices);
         });
 
-
         renderPass.end(); 
-
-        this.lights.doLightClustering(encoder); 
 
         renderer.device.queue.submit([encoder.finish()]); 
     }

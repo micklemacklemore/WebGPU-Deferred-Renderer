@@ -10,7 +10,6 @@ struct LightSet {
     lights: array<Light>
 }
 
-// TODO-2: you may want to create a ClusterSet struct similar to LightSet
 // struct ClusterIntersection {
 //     clusterIdx: u32,
 //     lightIdx: u32
@@ -25,7 +24,6 @@ struct Cluster {
 
 struct ClusterSet {
     numClusters: u32, 
-    numIntersections: u32,
     clusters: array<Cluster>
 }
 
