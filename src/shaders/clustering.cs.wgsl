@@ -28,7 +28,7 @@
 
 
 @compute
-@workgroup_size(${clusteringWorkGroupSize})
+@workgroup_size(${clusterWorkGroupSize}, ${clusterWorkGroupSize}, ${clusterWorkGroupSize})
 fn main(@builtin(global_invocation_id) globalIdx: vec3u) {
     return; 
 }

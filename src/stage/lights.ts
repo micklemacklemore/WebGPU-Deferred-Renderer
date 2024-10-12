@@ -19,6 +19,8 @@ export class Lights {
 
     static readonly lightIntensity = 0.1;
 
+    static readonly clusterDim = vec3.fromValues(16, 9, 24); 
+
     lightsArray = new Float32Array(Lights.maxNumLights * Lights.numFloatsPerLight);
     lightSetStorageBuffer: GPUBuffer;
 
@@ -129,7 +131,7 @@ export class Lights {
         // this should be the clusters buffer
         this.dummyBuffer = device.createBuffer({
             label: "Dummy GPU Buffer",
-            size: 512,
+            size: 4,
             usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST
         }); 
 
@@ -188,11 +190,15 @@ export class Lights {
     doLightClustering(encoder: GPUCommandEncoder) {
         // TODO-2: run the light clustering compute pass(es) here
         // implementing clustering here allows for reusing the code in both Forward+ and Clustered Deferred
-
         const computePass = encoder.beginComputePass(); 
         computePass.setPipeline(this.lightClusteringComputePipeline); 
         computePass.setBindGroup(0, this.lightClusteringComputeBindGroup); 
-        computePass.dispatchWorkgroups(1); 
+        computePass.dispatchWorkgroups(
+            Math.ceil(Lights.clusterDim[0] / shaders.constants.clusterWorkGroupSize), 
+            Math.ceil(Lights.clusterDim[1] / shaders.constants.clusterWorkGroupSize), 
+            Math.ceil(Lights.clusterDim[2] / shaders.constants.clusterWorkGroupSize)
+        ); 
+        
         computePass.end(); 
     }
 
