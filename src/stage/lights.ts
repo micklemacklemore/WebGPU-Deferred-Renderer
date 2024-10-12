@@ -304,17 +304,5 @@ export class Lights {
         this.clusterSet.copyResult(encoder); 
 
         device.queue.submit([encoder.finish()]);
-
-        // Block-like behavior using promise
-        device.queue.onSubmittedWorkDone().then(() => {
-            this.clusterSet.mapResult()
-                .then(view => {
-                    console.log(view.clusters[347].numLights[0]); 
-                    this.clusterSet.unMapResult(); // Unmap after processing
-                })
-                .catch(err => {
-                    console.log(err);
-                });
-        });
     }
 }

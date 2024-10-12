@@ -140,5 +140,17 @@ export class ForwardPlusRenderer extends renderer.Renderer {
         renderPass.end(); 
 
         renderer.device.queue.submit([encoder.finish()]); 
+
+        // Block-like behavior using promise
+        renderer.device.queue.onSubmittedWorkDone().then(() => {
+            this.lights.clusterSet.mapResult()
+                .then(view => {
+                    console.log(view.clusters[3454].numLights[0]); 
+                    this.lights.clusterSet.unMapResult(); // Unmap after processing
+                })
+                .catch(err => {
+                    console.log(err);
+                });
+        });
     }
 }
