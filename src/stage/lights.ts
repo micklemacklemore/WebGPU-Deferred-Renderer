@@ -11,7 +11,7 @@ function hueToRgb(h: number) {
 }
 
 interface ClusterSetViews {
-    numClusters: Uint32Array;
+    numClusters: number;
     clusters: Array<ClusterView>;
 }
 
@@ -24,7 +24,6 @@ interface ClusterView {
 
 class ClusterSet {
     static readonly numLightIndices = 100;       // total number of lights per cluster
-    static readonly lightIndicesByteSize = 400;  // total number in bytes
     static readonly clusterByteSize = 448;       // cluster byte size
 
     numClusters: number;
@@ -44,7 +43,7 @@ class ClusterSet {
             usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC
         }); 
 
-        // mappable staging buffer to map to CPU side
+        // mappable staging buffer to map to CPU side (for debugging purposes)
         this.clusterSetResultBuffer = device.createBuffer({
             label: "ClusterSet Result Buffer",
             size: this.byteSize,
@@ -83,7 +82,7 @@ class ClusterSet {
         };
 
         const clusterSetView = {
-            numClusters: new Uint32Array(mappedBuffer, 0, 1),
+            numClusters: new Uint32Array(mappedBuffer, 0, 1)[0],
             clusters: clusters
         };
 
@@ -190,7 +189,7 @@ export class Lights {
         // -- Light Cluster Compute Pipeline Setup --
 
         this.clusterSet = new ClusterSet(
-            shaders.constants.clusterX * shaders.constants.clusterY * shaders.constants.clusterZ
+            shaders.constants.clusterSize[0] * shaders.constants.clusterSize[1] * shaders.constants.clusterSize[2]
         ); 
 
         // create bind group layout
@@ -203,12 +202,12 @@ export class Lights {
                         visibility: GPUShaderStage.COMPUTE,
                         buffer: { type: "read-only-storage" }
                     },
-                    {
+                    { // clusterSet
                         binding: 1,
                         visibility: GPUShaderStage.COMPUTE,
                         buffer: { type: "storage" }
                     },
-                    {
+                    { // cameraUniforms
                         binding: 2,
                         visibility: GPUShaderStage.COMPUTE,
                         buffer: { type: "uniform" }
@@ -275,11 +274,10 @@ export class Lights {
         computePass.setPipeline(this.lightClusteringComputePipeline);
         computePass.setBindGroup(0, this.lightClusteringComputeBindGroup);
         computePass.dispatchWorkgroups(
-            Math.ceil(shaders.constants.clusterX / shaders.constants.clusterWorkgroupDimSize),
-            Math.ceil(shaders.constants.clusterY / shaders.constants.clusterWorkgroupDimSize),
-            Math.ceil(shaders.constants.clusterZ / shaders.constants.clusterWorkgroupDimSize)
+            Math.ceil(shaders.constants.clusterSize[0] / shaders.constants.clusterWorkgroupSize[0]),
+            Math.ceil(shaders.constants.clusterSize[1] / shaders.constants.clusterWorkgroupSize[1]),
+            Math.ceil(shaders.constants.clusterSize[2] / shaders.constants.clusterWorkgroupSize[2])
         );
-
         computePass.end();
     }
 

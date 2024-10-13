@@ -3,22 +3,50 @@ import { toRadians } from "../math_util";
 import { device, canvas, fovYDegrees, aspectRatio } from "../renderer";
 
 class CameraUniforms {
-    readonly buffer = new ArrayBuffer(20 * 4);
+    readonly buffer = new ArrayBuffer(176);
     private readonly floatView = new Float32Array(this.buffer);
 
     set viewProjMat(mat: Float32Array) {
         // TODO-1.1 DONE: set the first 16 elements of `this.floatView` to the input `mat`
-        for (let i = 0; i < mat.length; i++) {
+        for (let i = 0; i < 16; i++) {
             this.floatView[i] = mat[i]; 
         }
     }
 
+    set viewMat(mat: Float32Array) {
+        const offset = 16; 
+        for (let i = 0; i < 16; i++) {
+            this.floatView[offset + i] = mat[i]; 
+        }
+    }
+
     set canvasWidth(width: number) {
-        this.floatView[16] = width; 
+        const offset = 32; 
+        this.floatView[offset] = width; 
     }
 
     set canvasHeight(height: number) {
-        this.floatView[17] = height; 
+        const offset = 33; 
+        this.floatView[offset] = height; 
+    }
+
+    set cameraUp(up: Float32Array) {
+        const offset = 36; 
+        this.floatView[offset] = up[0]; 
+        this.floatView[offset + 1] = up[1]; 
+        this.floatView[offset + 2] = up[2]; 
+    }
+
+    set cameraRight(right: Float32Array) {
+        const offset = 40;
+        this.floatView[offset] = right[0]; 
+        this.floatView[offset + 1] = right[1]; 
+        this.floatView[offset + 2] = right[2]; 
+    }
+
+    set fovRadians(fov: number) {
+        const offset = 43; 
+        this.floatView[offset] = fov; 
     }
 }
 
@@ -64,12 +92,7 @@ export class Camera {
 
         canvas.addEventListener('mousedown', () => canvas.requestPointerLock());
         canvas.addEventListener('mouseup', () => document.exitPointerLock());
-        canvas.addEventListener('mousemove', (event) => this.onMouseMove(event));
-
-        // set canvas width and size, this won't change while running
-        // but if we want to support canvas resizing we could make this dynamic(?)
-        this.uniforms.canvasWidth = canvas.width; 
-        this.uniforms.canvasHeight = canvas.height; 
+        canvas.addEventListener('mousemove', (event) => this.onMouseMove(event));       
     }
 
     private onKeyEvent(event: KeyboardEvent, down: boolean) {
@@ -148,8 +171,15 @@ export class Camera {
         const lookPos = vec3.add(this.cameraPos, vec3.scale(this.cameraFront, 1));
         const viewMat = mat4.lookAt(this.cameraPos, lookPos, [0, 1, 0]);
         const viewProjMat = mat4.mul(this.projMat, viewMat);
+        
         // TODO-1.1 DONE: set `this.uniforms.viewProjMat` to the newly calculated view proj mat
         this.uniforms.viewProjMat = viewProjMat; 
+        this.uniforms.canvasWidth = canvas.width; 
+        this.uniforms.canvasHeight = canvas.height; 
+        this.uniforms.viewMat = viewMat; 
+        this.uniforms.cameraUp = this.cameraUp; 
+        this.uniforms.cameraRight = this.cameraRight; 
+        this.uniforms.fovRadians = toRadians(fovYDegrees); 
 
         // TODO-2: write to extra buffers needed for light clustering here
 

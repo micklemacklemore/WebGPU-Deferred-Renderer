@@ -57,5 +57,3 @@ let renderModeController = gui.add({ mode: renderModes.forwardPlus }, 'mode', re
 renderModeController.onChange(setRenderer);
 
 setRenderer(renderModeController.getValue());
-//const frenderer = new ForwardPlusRenderer(stage); 
-//frenderer.debug(); 

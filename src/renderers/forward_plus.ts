@@ -103,12 +103,7 @@ export class ForwardPlusRenderer extends renderer.Renderer {
 
         const views = await this.lights.clusterSet.mapResult(); 
         for (let i = 0; i < views.clusters.length; i++) {
-            // if (views.clusters[i].numLights === 3455) {
-            //     console.log(views.clusters[i].numLights); 
-            //     console.log(views.clusters[i].lightIndices[0]); 
-            //     console.log(views.clusters[i].lightIndices[1]); 
-            //     console.log(views.clusters[i].lightIndices[2]); 
-            // }
+            console.log(views.clusters[i].lightIndices.slice(0, 3)); 
         }
         
         this.lights.clusterSet.unMapResult(); 
@@ -119,7 +114,7 @@ export class ForwardPlusRenderer extends renderer.Renderer {
         const canvasTextureView = renderer.context.getCurrentTexture().createView();
 
         // - run the clustering compute shader
-        //this.lights.doLightClustering(encoder); 
+        this.lights.doLightClustering(encoder); 
         //this.lights.clusterSet.copyResult(encoder); 
 
         // - run the main rendering pass, using the computed clusters for efficient lighting
