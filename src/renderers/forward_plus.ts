@@ -95,12 +95,32 @@ export class ForwardPlusRenderer extends renderer.Renderer {
         });
     }
 
+    async debug() {
+        const encoder = renderer.device.createCommandEncoder();
+        this.lights.doLightClustering(encoder); 
+        this.lights.clusterSet.copyResult(encoder); 
+        renderer.device.queue.submit([encoder.finish()]); 
+
+        const views = await this.lights.clusterSet.mapResult(); 
+        for (let i = 0; i < views.clusters.length; i++) {
+            // if (views.clusters[i].numLights === 3455) {
+            //     console.log(views.clusters[i].numLights); 
+            //     console.log(views.clusters[i].lightIndices[0]); 
+            //     console.log(views.clusters[i].lightIndices[1]); 
+            //     console.log(views.clusters[i].lightIndices[2]); 
+            // }
+        }
+        
+        this.lights.clusterSet.unMapResult(); 
+    }
+
     override draw() {
         const encoder = renderer.device.createCommandEncoder();
         const canvasTextureView = renderer.context.getCurrentTexture().createView();
 
         // - run the clustering compute shader
-        this.lights.doLightClustering(encoder); 
+        //this.lights.doLightClustering(encoder); 
+        //this.lights.clusterSet.copyResult(encoder); 
 
         // - run the main rendering pass, using the computed clusters for efficient lighting
         const renderPassDescriptor : GPURenderPassDescriptor = {
@@ -140,17 +160,6 @@ export class ForwardPlusRenderer extends renderer.Renderer {
         renderPass.end(); 
 
         renderer.device.queue.submit([encoder.finish()]); 
-
-        // Block-like behavior using promise
-        renderer.device.queue.onSubmittedWorkDone().then(() => {
-            this.lights.clusterSet.mapResult()
-                .then(view => {
-                    console.log(view.clusters[3454].numLights[0]); 
-                    this.lights.clusterSet.unMapResult(); // Unmap after processing
-                })
-                .catch(err => {
-                    console.log(err);
-                });
-        });
+        
     }
 }

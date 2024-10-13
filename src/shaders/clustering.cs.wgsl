@@ -28,7 +28,7 @@
 
 
 @compute
-@workgroup_size(${clusterNumThreadsPerWorkgroup}, ${clusterNumThreadsPerWorkgroup}, ${clusterNumThreadsPerWorkgroup})
+@workgroup_size(${clusterWorkgroupDimSize}, ${clusterWorkgroupDimSize}, ${clusterWorkgroupDimSize})
 fn main(@builtin(global_invocation_id) global_invocation_id: vec3<u32>,
         @builtin(workgroup_id) workgroup_id: vec3<u32>,
         @builtin(num_workgroups) num_workgroups: vec3<u32>,
@@ -39,10 +39,12 @@ fn main(@builtin(global_invocation_id) global_invocation_id: vec3<u32>,
             workgroup_id.y * num_workgroups.x + 
             workgroup_id.z * num_workgroups.x * num_workgroups.y; 
         
-        let threadIdx = 
-            workgroupIdx * ${clusterNumThreadsPerWorkgroup} + local_invocation_index; 
+    let threadIdx = workgroupIdx * 64 + local_invocation_index; 
     if (threadIdx < 3456) {  // ????????
         clusterSet.clusters[threadIdx].numLights = threadIdx; 
+        clusterSet.clusters[threadIdx].lightIndices[0] = global_invocation_id.x; 
+        clusterSet.clusters[threadIdx].lightIndices[1] = global_invocation_id.y; 
+        clusterSet.clusters[threadIdx].lightIndices[2] = global_invocation_id.z; 
     }
     return; 
 }

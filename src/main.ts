@@ -39,12 +39,15 @@ function setRenderer(mode: string) {
     switch (mode) {
         case renderModes.naive:
             renderer = new NaiveRenderer(stage);
+            renderer.start(); 
             break;
         case renderModes.forwardPlus:
             renderer = new ForwardPlusRenderer(stage);
+            renderer.start(); 
             break;
         case renderModes.clusteredDeferred:
             renderer = new ClusteredDeferredRenderer(stage);
+            renderer.start(); 
             break;
     }
 }
@@ -54,3 +57,5 @@ let renderModeController = gui.add({ mode: renderModes.forwardPlus }, 'mode', re
 renderModeController.onChange(setRenderer);
 
 setRenderer(renderModeController.getValue());
+//const frenderer = new ForwardPlusRenderer(stage); 
+//frenderer.debug(); 

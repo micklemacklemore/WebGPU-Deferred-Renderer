@@ -18,7 +18,7 @@ interface ClusterSetViews {
 interface ClusterView {
     minPoint: Float32Array;
     maxPoint: Float32Array;
-    numLights: Uint32Array;
+    numLights: number;
     lightIndices: Uint32Array;
 }
 
@@ -41,7 +41,7 @@ class ClusterSet {
         this.clusterSetStorageBuffer = device.createBuffer({
             label: "ClusterSet Storage Buffer",
             size: this.byteSize,
-            usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST
+            usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC
         }); 
 
         // mappable staging buffer to map to CPU side
@@ -69,7 +69,6 @@ class ClusterSet {
 
         await this.clusterSetResultBuffer.mapAsync(GPUMapMode.READ); 
 
-        this.clusterSetResultBuffer.mapState
         const mappedBuffer : ArrayBuffer = this.clusterSetResultBuffer.getMappedRange(); 
         
         const clusters = new Array<ClusterView>;
@@ -78,7 +77,7 @@ class ClusterSet {
             clusters.push({
                 minPoint: new Float32Array(mappedBuffer, offset + 16, 4),
                 maxPoint: new Float32Array(mappedBuffer, offset + 32, 4),
-                numLights: new Uint32Array(mappedBuffer, offset + 48, 1),
+                numLights: (new Uint32Array(mappedBuffer, offset + 48, 1))[0],
                 lightIndices: new Uint32Array(mappedBuffer, offset + 52, ClusterSet.numLightIndices)
             });
         };
@@ -86,9 +85,9 @@ class ClusterSet {
         const clusterSetView = {
             numClusters: new Uint32Array(mappedBuffer, 0, 1),
             clusters: clusters
-        }
+        };
 
-        return clusterSetView; 
+        return clusterSetView;
     }
 
     unMapResult() {
@@ -276,9 +275,9 @@ export class Lights {
         computePass.setPipeline(this.lightClusteringComputePipeline);
         computePass.setBindGroup(0, this.lightClusteringComputeBindGroup);
         computePass.dispatchWorkgroups(
-            Math.ceil(shaders.constants.clusterX / shaders.constants.clusterNumThreadsPerWorkgroup),
-            Math.ceil(shaders.constants.clusterY / shaders.constants.clusterNumThreadsPerWorkgroup),
-            Math.ceil(shaders.constants.clusterZ / shaders.constants.clusterNumThreadsPerWorkgroup)
+            Math.ceil(shaders.constants.clusterX / shaders.constants.clusterWorkgroupDimSize),
+            Math.ceil(shaders.constants.clusterY / shaders.constants.clusterWorkgroupDimSize),
+            Math.ceil(shaders.constants.clusterZ / shaders.constants.clusterWorkgroupDimSize)
         );
 
         computePass.end();
@@ -300,8 +299,6 @@ export class Lights {
         computePass.dispatchWorkgroups(workgroupCount);
 
         computePass.end();
-
-        this.clusterSet.copyResult(encoder); 
 
         device.queue.submit([encoder.finish()]);
     }

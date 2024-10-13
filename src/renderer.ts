@@ -117,7 +117,11 @@ export abstract class Renderer {
         this.camera = stage.camera;
         this.stats = stage.stats;
 
-        this.frameRequestId = requestAnimationFrame((t) => this.onFrame(t));
+        this.frameRequestId = 0; 
+    }
+
+    start(): void {
+        requestAnimationFrame((t) => this.onFrame(t)); 
     }
 
     stop(): void {
