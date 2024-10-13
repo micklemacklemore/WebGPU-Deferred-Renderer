@@ -28,6 +28,8 @@
 
 // number of clusters in xyz
 const numGrid = vec3<u32>(${clusterSize}); 
+const zNear : f32 = 0.1; 
+const zFar : f32 = 50.0;    // arbitrary value that fits the sponza scene
 
 @compute
 @workgroup_size(${clusterWorkgroupSize})
@@ -46,54 +48,92 @@ fn main(@builtin(global_invocation_id) globalID: vec3<u32>,
     // calculate cluster bounds
     // -----------------------
 
-    // cluster linear index
-    let clusterIndex = globalID.x + globalID.y * numGrid.x + globalID.z * numGrid.x * numGrid.y;
-
-    clusters[clusterIndex].
-
+    // uses code from
     // https://github.com/DaveH355/clustered-shading
     // https://www.aortiz.me/2018/12/21/CG.html 
 
     // calculate screensize (vec2) tile size using canvas dimensions
-    // vec2 tileSize
-    vec2 tileSize = cameraUniforms.canvasSize / numGrid.xy; 
+    let tileSize = cameraUniforms.canvasSize / vec2f(numGrid.xy); 
 
     // get the current tile in screenspace
-    // vec2 min tile (top left corner point)
-    // vec2 max tile (bottom right corner point)
+    let minTile_screen : vec2f = vec2f(globalID.xy) * tileSize; 
+    let maxTile_screen : vec2f = (vec2f(globalID.xy) + 1) * tileSize; 
 
     // convert min and max tile to view space (trace ray? inverse projection)
-    // vec3 min tile
-    // vec3 max tile
+    let minTile : vec3f = screenToView(minTile_screen); 
+    let maxTile : vec3f = screenToView(maxTile_screen);  
 
     // get current cluster's near and far planes
-    // float planeNear
-    // float planeFar
+    let planeNear : f32 = zNear * pow(zFar / zNear, f32(globalID.z) / f32(numGrid.z)); 
+    let planeFar  : f32 = zNear * pow(zFar / zNear, f32(globalID.z + 1) / f32(numGrid.z));  
 
     // calculate Axis Aligned Bounding Box and assign to cluster
+    let minPointNear : vec3f = lineIntersectionWithZPlane(vec3f(0, 0, 0), minTile, planeNear);
+    let minPointFar : vec3f = lineIntersectionWithZPlane(vec3f(0, 0, 0), minTile, planeFar);
+    let maxPointNear : vec3f = lineIntersectionWithZPlane(vec3f(0, 0, 0), maxTile, planeNear);
+    let maxPointFar : vec3f = lineIntersectionWithZPlane(vec3f(0, 0, 0), maxTile, planeFar);
 
-    // vec3 minPointNear
-    // vec3 minPointFar
-    // vec3 maxPointNear
-    // vec3 maxPointFar
+    let clusterIndex = globalID.x + globalID.y * numGrid.x + globalID.z * numGrid.x * numGrid.y;
+    var cluster : Cluster = clusterSet.clusters[clusterIndex]; 
 
-    // vec4 minPoint = min(minPointNear, minPointFar)
-    // vec4 maxPoint = max(maxPointNear, maxPointFar) 
-
+    cluster.minPoint = vec4f(min(minPointNear, minPointFar), 0.0); 
+    cluster.maxPoint = vec4f(max(maxPointNear, maxPointFar), 0.0); 
 
     // assign lights to current cluster
     // --------------------------------
+    
+    let numLights: u32 = lightSet.numLights; 
 
-    // For each cluster:
-    //     - Initialize a counter for the number of lights in this cluster.
+    for (var i : u32 = 0; i < lightSet.numLights; i++) {
+        if (cluster.numLights >= 100) {
+            break; 
+        }
+        if (isLightInCluster(i, cluster)) {
+            cluster.lightIndices[cluster.numLights] = i; 
+            cluster.numLights++; 
+        }
+    }
 
-    //     For each light:
-    //         - Check if the light intersects with the cluster’s bounding box (AABB).
-    //         - If it does, add the light to the cluster's light list.
-    //         - Stop adding lights if the maximum number of lights is reached.
-
-    //     - Store the number of lights assigned to this cluster.
-
+    clusterSet.clusters[clusterIndex] = cluster; 
 
     return; 
+}
+
+fn isLightInCluster(lightIdx : u32, cluster : Cluster) -> bool {
+    let center : vec3f = vec3f(
+        (cameraUniforms.viewMat * vec4f(lightSet.lights[lightIdx].pos, 1)).xyz
+    );
+
+    let aabbMin : vec3f = cluster.minPoint.xyz; 
+    let aabbMax : vec3f = cluster.maxPoint.xyz; 
+
+    let closestPoint : vec3f = clamp(center, aabbMin, aabbMax); 
+    let distanceSquared : f32 = dot(closestPoint - center, closestPoint - center); 
+
+    return distanceSquared <= ${lightRadius} * ${lightRadius}; 
+}
+
+fn lineIntersectionWithZPlane(pStart : vec3f, pEnd : vec3f, zDistance : f32) -> vec3f {
+    let direction : vec3f = pEnd - pStart; 
+    let normal : vec3f = vec3f(0., 0., -1.); // plane normal
+    let t : f32 = (zDistance - dot(normal, pStart)) / dot(normal, direction); 
+
+    return pStart + t * direction; 
+}
+
+// Convert screen coords to view coords on the camera's near plane
+fn screenToView(s : vec2<f32>) -> vec3<f32> {
+    // version that doesn't use a inverse projection matrix, but not sure if it works
+
+    // let tanalpha : f32 = tan(cameraUniforms.fovRadians / 2.0); 
+    // let V : vec3f = vec3f(0, 1., 0) * nearPlane * tanalpha; 
+    // let H : vec3f = vec3f(1., 0, 0) * nearPlane * tanalpha * cameraUniforms.aspectRatio;
+    // let planeMiddle : vec3f = vec3f(0, 0, nearPlane); 
+    // return planeMiddle + s.x * H + s.y * V; 
+
+    // normalize screen coordinates to NDC on the near plane (which is 0.0 on webgpu)
+    let ndc = vec4f(s / cameraUniforms.canvasSize * 2.0 - 1.0, 0.0, 1.0); 
+    var view : vec4f = cameraUniforms.projMatInverse * ndc; 
+    view /= view.w; 
+    return view.xyz; 
 }

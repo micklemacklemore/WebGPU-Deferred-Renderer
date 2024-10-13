@@ -33,7 +33,9 @@ struct CameraUniforms {
     canvasSize: vec2f,
     cameraUp: vec3f,
     cameraRight: vec3f,
-    fovRadians: f32
+    fovRadians: f32,
+    aspectRatio: f32,
+    projMatInverse: mat4x4f
 }
 
 // CHECKITOUT: this special attenuation function ensures lights don't affect geometry outside the maximum light radius
