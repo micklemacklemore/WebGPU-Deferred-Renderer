@@ -3,8 +3,6 @@ import * as shaders from '../shaders/shaders';
 import { Stage } from '../stage/stage';
 
 export class ForwardPlusRenderer extends renderer.Renderer {
-    // TODO-2: add layouts, pipelines, textures, etc. needed for Forward+ here
-    // you may need extra uniforms such as the camera view matrix and the canvas resolution
     sceneUniformsBindGroupLayout : GPUBindGroupLayout; 
     sceneUniformsBindGroup : GPUBindGroup; 
 
@@ -15,20 +13,23 @@ export class ForwardPlusRenderer extends renderer.Renderer {
     pipeline : GPURenderPipeline; 
 
     constructor(stage: Stage) {
-        // TODO-2: initialize layouts, pipelines, textures, etc. needed for Forward+ here
         super(stage);
 
         this.sceneUniformsBindGroupLayout = renderer.device.createBindGroupLayout({
             label: "forward scene uniforms bind group layout",
             entries: [
-                // TODO-1.2 DONE: add an entry for camera uniforms at binding 0, visible to only the vertex shader, and of type "uniform"
                 { // camera uniforms
                     binding: 0,
-                    visibility: GPUShaderStage.VERTEX,
+                    visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT,
                     buffer: { type: "uniform" }
                 },
                 { // lightSet
                     binding: 1,
+                    visibility: GPUShaderStage.FRAGMENT,
+                    buffer: { type: "read-only-storage" }
+                },
+                { // clusterSet
+                    binding: 2,
                     visibility: GPUShaderStage.FRAGMENT,
                     buffer: { type: "read-only-storage" }
                 }
@@ -39,9 +40,6 @@ export class ForwardPlusRenderer extends renderer.Renderer {
             label: "forward scene uniforms bind group",
             layout: this.sceneUniformsBindGroupLayout,
             entries: [
-                // TODO-1.2 DONE: add an entry for camera uniforms at binding 0
-                // you can access the camera using `this.camera`
-                // if you run into TypeScript errors, you're probably trying to upload the host buffer instead
                 {
                     binding: 0,
                     resource: { buffer: this.camera.uniformsGPUBuffer }
@@ -49,6 +47,10 @@ export class ForwardPlusRenderer extends renderer.Renderer {
                 {
                     binding: 1,
                     resource: { buffer: this.lights.lightSetStorageBuffer }
+                },
+                {
+                    binding: 2,
+                    resource: { buffer: this.lights.clusterSet.clusterSetStorageBuffer }
                 }
             ]
         });
@@ -97,11 +99,14 @@ export class ForwardPlusRenderer extends renderer.Renderer {
 
     async debug() {
         const encoder = renderer.device.createCommandEncoder();
+
         this.lights.doLightClustering(encoder); 
         this.lights.clusterSet.copyResult(encoder); 
+        
         renderer.device.queue.submit([encoder.finish()]); 
 
         const views = await this.lights.clusterSet.mapResult(); 
+
         for (let i = 0; i < views.clusters.length; i++) {
             console.log(views.clusters[i].lightIndices.slice(0, 3)); 
         }
@@ -114,8 +119,7 @@ export class ForwardPlusRenderer extends renderer.Renderer {
         const canvasTextureView = renderer.context.getCurrentTexture().createView();
 
         // - run the clustering compute shader
-        this.lights.doLightClustering(encoder); 
-        //this.lights.clusterSet.copyResult(encoder); 
+        this.lights.doLightClustering(encoder);
 
         // - run the main rendering pass, using the computed clusters for efficient lighting
         const renderPassDescriptor : GPURenderPassDescriptor = {

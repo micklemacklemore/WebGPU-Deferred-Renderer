@@ -19,7 +19,7 @@ struct Cluster {
     minPoint: vec4f,
     maxPoint: vec4f,
     numLights: u32,
-    lightIndices: array<u32, 100>
+    lightIndices: array<u32, ${numLightIndices}>
 }
 
 struct ClusterSet {
@@ -37,6 +37,11 @@ struct CameraUniforms {
     aspectRatio: f32,
     projMatInverse: mat4x4f
 }
+
+// number of clusters in xyz
+const numGrid = vec3<u32>(${clusterSize}); 
+const zNear : f32 = 0.1; 
+const zFar : f32 = 20.0;    // arbitrary value that fits the sponza scene
 
 // CHECKITOUT: this special attenuation function ensures lights don't affect geometry outside the maximum light radius
 fn rangeAttenuation(distance: f32) -> f32 {

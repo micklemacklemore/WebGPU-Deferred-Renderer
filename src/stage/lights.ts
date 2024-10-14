@@ -23,8 +23,8 @@ interface ClusterView {
 }
 
 class ClusterSet {
-    static readonly numLightIndices = 100;       // total number of lights per cluster
-    static readonly clusterByteSize = 448;       // cluster byte size
+    static readonly numLightIndices = shaders.constants.numLightIndices;       // total number of lights per cluster
+    static readonly clusterByteSize = 848;       // cluster byte size
 
     numClusters: number;
     byteSize : number; 

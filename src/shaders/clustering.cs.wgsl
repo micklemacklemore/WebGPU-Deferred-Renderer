@@ -1,5 +1,3 @@
-// TODO-2: implement the light clustering compute shader
-
 // ------------------------------------
 // Calculating cluster bounds:
 // ------------------------------------
@@ -25,11 +23,6 @@
 @group(${bindGroup_scene}) @binding(0) var<storage, read> lightSet: LightSet;
 @group(${bindGroup_scene}) @binding(1) var<storage, read_write> clusterSet: ClusterSet;
 @group(${bindGroup_scene}) @binding(2) var<uniform> cameraUniforms: CameraUniforms;  
-
-// number of clusters in xyz
-const numGrid = vec3<u32>(${clusterSize}); 
-const zNear : f32 = 0.1; 
-const zFar : f32 = 50.0;    // arbitrary value that fits the sponza scene
 
 @compute
 @workgroup_size(${clusterWorkgroupSize})
@@ -78,6 +71,7 @@ fn main(@builtin(global_invocation_id) globalID: vec3<u32>,
 
     cluster.minPoint = vec4f(min(minPointNear, minPointFar), 0.0); 
     cluster.maxPoint = vec4f(max(maxPointNear, maxPointFar), 0.0); 
+    cluster.numLights = 0; 
 
     // assign lights to current cluster
     // --------------------------------
@@ -85,7 +79,7 @@ fn main(@builtin(global_invocation_id) globalID: vec3<u32>,
     let numLights: u32 = lightSet.numLights; 
 
     for (var i : u32 = 0; i < lightSet.numLights; i++) {
-        if (cluster.numLights >= 100) {
+        if (cluster.numLights >= ${numLightIndices}) {
             break; 
         }
         if (isLightInCluster(i, cluster)) {
