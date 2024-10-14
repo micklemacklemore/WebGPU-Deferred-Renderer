@@ -65,7 +65,7 @@ fn main(
     let tile : vec3<u32> = vec3<u32>(vec2<u32>(fragCoord.xy / tileSize), u32(zTile));
     let tileIndex : u32 = tile.x + (tile.y * numGrid.x) + (tile.z * numGrid.x * numGrid.y);
 
-    let cluster : Cluster = clusterSet.clusters[tileIndex];  
+    let cluster : ptr<storage, Cluster, read> = &clusterSet.clusters[tileIndex];  
 
     var totalLightContrib = vec3f(0, 0, 0);
 
@@ -75,7 +75,7 @@ fn main(
     }
 
     // debug visualization
-    //diffuseColor = vec4f(hash33(cluster.minPoint.xyz), 1.); 
+    //diffuseColor = vec4f(hash33(cluster.minPoint.zzz), 1.); 
     //return vec4(diffuseColor.rgb, 1); 
 
     var finalColor = diffuseColor.rgb * totalLightContrib;

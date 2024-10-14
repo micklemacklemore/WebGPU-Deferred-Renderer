@@ -67,7 +67,7 @@ fn main(@builtin(global_invocation_id) globalID: vec3<u32>,
     let maxPointFar : vec3f = lineIntersectionWithZPlane(vec3f(0, 0, 0), maxTile, planeFar);
 
     let clusterIndex = globalID.x + globalID.y * numGrid.x + globalID.z * numGrid.x * numGrid.y;
-    var cluster : Cluster = clusterSet.clusters[clusterIndex]; 
+    let cluster : ptr<storage, Cluster, read_write> = &clusterSet.clusters[clusterIndex]; 
 
     cluster.minPoint = vec4f(min(minPointNear, minPointFar), 0.0); 
     cluster.maxPoint = vec4f(max(maxPointNear, maxPointFar), 0.0); 
@@ -88,12 +88,10 @@ fn main(@builtin(global_invocation_id) globalID: vec3<u32>,
         }
     }
 
-    clusterSet.clusters[clusterIndex] = cluster; 
-
     return; 
 }
 
-fn isLightInCluster(lightIdx : u32, cluster : Cluster) -> bool {
+fn isLightInCluster(lightIdx : u32, cluster : ptr<storage, Cluster, read_write>) -> bool {
     let center : vec3f = vec3f(
         (cameraUniforms.viewMat * vec4f(lightSet.lights[lightIdx].pos, 1)).xyz
     );
