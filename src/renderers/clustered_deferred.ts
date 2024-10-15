@@ -29,7 +29,9 @@ export class ClusteredDeferredRenderer extends renderer.Renderer {
     normalTextureView : GPUTextureView;
 
     GBufferPipeline : GPURenderPipeline; 
-    FullScreenPipeline : GPURenderPipeline | undefined; 
+    FullScreenPipeline : GPURenderPipeline; 
+
+    GBufferRenderPassDescriptor : GPURenderPassDescriptor; 
 
     constructor(stage: Stage) {
         super(stage);
@@ -199,19 +201,43 @@ export class ClusteredDeferredRenderer extends renderer.Renderer {
         });
 
         // full screen pipeline
-        this.FullScreenPipeline = undefined; 
-    }
+        this.FullScreenPipeline = renderer.device.createRenderPipeline({
+            label: "Fullscreen pipeline",
+            layout: renderer.device.createPipelineLayout({
+                label: "forward pipeline layout",
+                bindGroupLayouts: [
+                    this.sceneUniformsBindGroupLayout,
+                    this.gBufferBindGroupLayout
+                ]
+            }),
+            depthStencil: {
+                depthWriteEnabled: true,
+                depthCompare: "less",
+                format: "depth24plus"
+            },
+            vertex: {
+                module: renderer.device.createShaderModule({
+                    label: "fullscreen vert shader",
+                    code: shaders.clusteredDeferredFullscreenVertSrc
+                }),
+            },
+            fragment: {
+                module: renderer.device.createShaderModule({
+                    label: "fullscreen frag shader",
+                    code: shaders.clusteredDeferredFullscreenFragSrc,
+                }),
+                targets: [
+                    {   // position
+                        format: renderer.canvasFormat 
+                    }
+                ]
+            }
+        }); 
 
-    override draw() {
-        const encoder = renderer.device.createCommandEncoder(); 
-        const canvasTextureView = renderer.context.getCurrentTexture().createView(); 
+        // init gbuffer render pass descriptors
 
-        // - run the clustering compute shader
-        this.lights.doLightClustering(encoder); 
-
-        // - run the G-buffer pass, outputting position, albedo, and normals
-        const renderPassDescriptor : GPURenderPassDescriptor = {
-            label: "deferred render pass",
+        this.GBufferRenderPassDescriptor = {
+            label: "gbuffer render pass",
             colorAttachments: [
                 {
                     view: this.positionTextureView,
@@ -240,23 +266,65 @@ export class ClusteredDeferredRenderer extends renderer.Renderer {
             }
         }; 
 
-        const renderPass = encoder.beginRenderPass(renderPassDescriptor); 
         
-        renderPass.setPipeline(this.GBufferPipeline); 
-        renderPass.setBindGroup(shaders.constants.bindGroup_scene, this.sceneUniformsBindGroup); 
+    }
 
-        // render scene
-        this.scene.iterate(node => {
-            renderPass.setBindGroup(shaders.constants.bindGroup_model, node.modelBindGroup);
-        }, material => {
-            renderPass.setBindGroup(shaders.constants.bindGroup_material, material.materialBindGroup);
-        }, primitive => {
-            renderPass.setVertexBuffer(0, primitive.vertexBuffer);
-            renderPass.setIndexBuffer(primitive.indexBuffer, 'uint32');
-            renderPass.drawIndexed(primitive.numIndices);
-        });
+    override draw() {
+        const encoder = renderer.device.createCommandEncoder(); 
+        const canvasTextureView = renderer.context.getCurrentTexture().createView(); 
 
-        renderPass.end(); 
+        // - run the clustering compute shader
+        this.lights.doLightClustering(encoder); 
+
+        // - run the G-buffer pass, outputting position, albedo, and normals
+        {
+            const renderPass = encoder.beginRenderPass(this.GBufferRenderPassDescriptor); 
+            
+            renderPass.setPipeline(this.GBufferPipeline); 
+            renderPass.setBindGroup(shaders.constants.bindGroup_scene, this.sceneUniformsBindGroup); 
+
+            // render scene
+            this.scene.iterate(node => {
+                renderPass.setBindGroup(shaders.constants.bindGroup_model, node.modelBindGroup);
+            }, material => {
+                renderPass.setBindGroup(shaders.constants.bindGroup_material, material.materialBindGroup);
+            }, primitive => {
+                renderPass.setVertexBuffer(0, primitive.vertexBuffer);
+                renderPass.setIndexBuffer(primitive.indexBuffer, 'uint32');
+                renderPass.drawIndexed(primitive.numIndices);
+            });
+
+            renderPass.end(); 
+        }
+
+        {
+            const fullScreenRenderPassDescriptor : GPURenderPassDescriptor = {
+                label: "fullscreen render pass",
+                colorAttachments: [
+                    {
+                        view: canvasTextureView,
+                        clearValue: [0, 0, 0, 0],
+                        loadOp: "clear",
+                        storeOp: "store"
+                    }
+                ],
+                depthStencilAttachment: {
+                    view: this.depthTextureView,
+                    depthClearValue: 1.0,
+                    depthLoadOp: "clear",
+                    depthStoreOp: "store"
+                }
+            }; 
+
+            const renderPass = encoder.beginRenderPass(fullScreenRenderPassDescriptor); 
+
+            renderPass.setPipeline(this.FullScreenPipeline); 
+            renderPass.setBindGroup(shaders.constants.bindGroup_scene, this.sceneUniformsBindGroup); 
+            renderPass.setBindGroup(shaders.constants.bindGroup_framebuffer, this.gBufferBindGroup); 
+            renderPass.draw(6); 
+
+            renderPass.end(); 
+        }
 
         renderer.device.queue.submit([encoder.finish()]); 
 
