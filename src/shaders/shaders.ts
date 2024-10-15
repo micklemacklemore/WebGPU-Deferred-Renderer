@@ -26,6 +26,7 @@ export const constants = {
     bindGroup_scene: 0,
     bindGroup_model: 1,
     bindGroup_material: 2,
+    bindGroup_framebuffer: 3,
     numLightIndices: 200,
     clusterWorkgroupSize: [4, 4, 4],    
     clusterSize: [16, 9, 24],

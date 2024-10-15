@@ -39,7 +39,7 @@ fn hash33(p3 : vec3f) -> vec3f
 @fragment
 fn main(
     in: FragmentInput,
-    @builtin(position) fragCoord: vec4f
+    @builtin(position) pixelPos: vec4f
 ) -> @location(0) vec4f
 {
     var diffuseColor = textureSample(diffuseTex, diffuseTexSampler, in.uv);
@@ -49,20 +49,15 @@ fn main(
 
     let linearClusterSize : u32 = u32(numGrid.x * numGrid.y * numGrid.z); 
 
-    let posView : vec3f = (cameraUniforms.viewMat * vec4f(in.pos, 1.f)).xyz;
+    var posView : vec3f = (cameraUniforms.viewMat * vec4f(in.pos, 1.f)).xyz;
 
-    // for (var i : u32 = 0; i < linearClusterSize; i++) {
-    //     let cluster : Cluster = clusterSet.clusters[i];  
-    //     if (all(posView > cluster.minPoint.xyz) && all(posView < cluster.maxPoint.xyz)) {
-    //         diffuseColor = vec4f(hash33(cluster.minPoint.xyz), 1.); 
-    //         break; 
-    //     }
-    // }
+    var fragCoord = pixelPos; 
 
     // Locating which cluster this fragment is part of
     let zTile : u32 = u32((log(abs(posView.z) / zNear) * f32(numGrid.z)) / log(zFar / zNear));
     let tileSize : vec2f = cameraUniforms.canvasSize / vec2f(numGrid.xy);
-    let tile : vec3<u32> = vec3<u32>(vec2<u32>(fragCoord.xy / tileSize), u32(zTile));
+    var tile : vec3<u32> = vec3<u32>(vec2<u32>(fragCoord.xy / tileSize), u32(zTile));
+
     let tileIndex : u32 = tile.x + (tile.y * numGrid.x) + (tile.z * numGrid.x * numGrid.y);
 
     let cluster : ptr<storage, Cluster, read> = &clusterSet.clusters[tileIndex];  

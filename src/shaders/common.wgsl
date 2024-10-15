@@ -41,7 +41,7 @@ struct CameraUniforms {
 // number of clusters in xyz
 const numGrid = vec3<u32>(${clusterSize}); 
 const zNear : f32 = 0.1; 
-const zFar : f32 = 20.0;    // arbitrary value that fits the sponza scene
+const zFar : f32 = 60.0;    // arbitrary value that fits the sponza scene
 
 // CHECKITOUT: this special attenuation function ensures lights don't affect geometry outside the maximum light radius
 fn rangeAttenuation(distance: f32) -> f32 {

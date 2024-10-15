@@ -124,7 +124,8 @@ fn screenToView(s : vec2<f32>) -> vec3<f32> {
     // return planeMiddle + s.x * H + s.y * V; 
 
     // normalize screen coordinates to NDC on the near plane (which is 0.0 on webgpu)
-    let ndc = vec4f(s / cameraUniforms.canvasSize * 2.0 - 1.0, 0.0, 1.0); 
+    var ndc = vec4f(s / cameraUniforms.canvasSize * 2.0 - 1.0, 0.0, 1.0); 
+    ndc.y *= -1; 
     var view : vec4f = cameraUniforms.projMatInverse * ndc; 
     view /= view.w; 
     return view.xyz; 
