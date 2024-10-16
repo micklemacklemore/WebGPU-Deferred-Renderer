@@ -69,8 +69,11 @@ fn main(@builtin(global_invocation_id) globalID: vec3<u32>,
     let clusterIndex = globalID.x + globalID.y * numGrid.x + globalID.z * numGrid.x * numGrid.y;
     let cluster : ptr<storage, Cluster, read_write> = &clusterSet.clusters[clusterIndex]; 
 
-    cluster.minPoint = vec4f(min(minPointNear, minPointFar), 0.0); 
-    cluster.maxPoint = vec4f(max(maxPointNear, maxPointFar), 0.0); 
+    let minPointAABB : vec3f = min(min(minPointNear, minPointFar),min(maxPointNear, maxPointFar));
+    let maxPointAABB : vec3f = max(max(minPointNear, minPointFar),max(maxPointNear, maxPointFar));
+
+    cluster.minPoint = vec4f(minPointAABB, 0.0); 
+    cluster.maxPoint = vec4f(maxPointAABB, 0.0); 
     cluster.numLights = 0; 
 
     // assign lights to current cluster
