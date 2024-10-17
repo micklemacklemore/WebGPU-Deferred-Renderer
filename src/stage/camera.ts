@@ -7,7 +7,6 @@ class CameraUniforms {
     private readonly floatView = new Float32Array(this.buffer);
 
     set viewProjMat(mat: Float32Array) {
-        // TODO-1.1 DONE: set the first 16 elements of `this.floatView` to the input `mat`
         for (let i = 0; i < 16; i++) {
             this.floatView[i] = mat[i]; 
         }
@@ -82,7 +81,6 @@ export class Camera {
     keys: { [key: string]: boolean } = {};
 
     constructor () {
-        // TODO-1.1 DONE: set `this.uniformsBuffer` to a new buffer of size `this.uniforms.buffer.byteLength`
         // ensure the usage is set to `GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST` since we will be copying to this buffer
         // check `lights.ts` for examples of using `device.createBuffer()`
         //
