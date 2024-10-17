@@ -39,7 +39,15 @@ What are the benefits and tradeoffs of using one over the other?
 For any differences in performance, briefly explain what may be causing the difference.
 ```
 
-### Credits
+### 👨‍🔬 Method
+
+### 📊 Results
+
+#### Clustered "Forward+" Rendering (Forward Rendering + Clustering)
+
+#### Clustered Deferred Rendering (Deferred Rendering + Clustering)
+
+## Credits
 
 - [Vite](https://vitejs.dev/)
 - [loaders.gl](https://loaders.gl/)
