@@ -5,7 +5,7 @@ WebGPU Forward+ and Clustered Deferred Shading
 
 ## 🚀 Overview
 
-> University of Pennsylvania, CIS 5650: GPU Programming and Architecture, Project 3 - CUDA Path Tracer
+> University of Pennsylvania, CIS 5650: GPU Programming and Architecture, Project 4 - WebGPU Clustered Renderer
 > * Michael Mason
 >   + [Personal Website](https://www.michaelmason.xyz/)
 > * Tested on: Windows 11, Ryzen 9 5900HS @ 3.00GHz 16GB, RTX 3080 (Laptop) 8192MB
