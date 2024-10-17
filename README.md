@@ -8,25 +8,28 @@ WebGPU Forward+ and Clustered Deferred Shading
 > University of Pennsylvania, CIS 5650: GPU Programming and Architecture, Project 3 - CUDA Path Tracer
 > * Michael Mason
 >   + [Personal Website](https://www.michaelmason.xyz/)
-> * Tested on: Windows 11, Ryzen 9 5900HS @ 3.00GHz 16GB, RTX 3080 (Laptop) 8192MB 
+> * Tested on: Windows 11, Ryzen 9 5900HS @ 3.00GHz 16GB, RTX 3080 (Laptop) 8192MB
 
-### Live Demo
+This is a *[clustered deferred renderer](https://www.aortiz.me/2018/12/21/CG.html)* implemented in [WebGPU](https://github.com/gpuweb/gpuweb), an explicit GPU API for the web.   
+
+The goal of this 1.5-week project was to:
+
+* Learn the WebGPU API and develop a better understanding of explicit APIs.
+* Understand clustered shading, which involves splitting up the camera frustum into bounding "clusters", and assign the lights from the scene to them.
+* Understand deferred shading, which involves splitting rendering in to a "G-Buffer" render pass and a "Full-screen" lighting render pass.
+  + "G-Buffer" pass: process the geometry data and output seperate position, normal and albedo framebuffers
+  + "Full-screen" Lighting pass: using the framebuffers from the last pass, calculate the lighting for each pixel.
+
+
+### 🎮 Live Demo
 
 [See Live Demo Here! (WebGPU Supported Browsers Only)](https://micklemacklemore.github.io/WebGPU-Deferred-Renderer/)
 
-### Demo Video/GIF
+### 📺 Demo Video
 
-[![](img/video.mp4)](TODO)
+https://github.com/user-attachments/assets/cfd5b4da-c825-4aac-a5a3-9921906e8ecb
 
-### (TODO: Your README)
-
-*DO NOT* leave the README to the last minute! It is a crucial part of the
-project, and we will not be able to grade you without a good README.
-
-This assignment has a considerable amount of performance analysis compared
-to implementation work. Complete the implementation early to leave time!
-
-## Performance Analysis
+## 🤹‍♂️ Performance Analysis
 
 ```
 Compare your implementations of Forward+ and Clustered Deferred shading and analyze their differences.
@@ -43,3 +46,9 @@ For any differences in performance, briefly explain what may be causing the diff
 - [dat.GUI](https://github.com/dataarts/dat.gui)
 - [stats.js](https://github.com/mrdoob/stats.js)
 - [wgpu-matrix](https://github.com/greggman/wgpu-matrix)
+
+These were great resources on deferred and clustered shading methods:
+
+- [A Primer on Efficient Rendering Algorithms & Clustered Shading by Ángel Ortiz](https://www.aortiz.me/2018/12/21/CG.html)
+- [DaveH355 Explanation of the blog above with more GLSL Samples](https://github.com/DaveH355/clustered-shading)
+- [A WebGPU Example that implements deferred shading](https://webgpu.github.io/webgpu-samples/?sample=deferredRendering)
