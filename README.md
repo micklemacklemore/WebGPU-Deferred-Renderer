@@ -43,9 +43,13 @@ For any differences in performance, briefly explain what may be causing the diff
 
 ### 📊 Results
 
-#### Clustered "Forward+" Rendering (Forward Rendering + Clustering)
+#### Clustered "Forward+" Rendering
 
-#### Clustered Deferred Rendering (Deferred Rendering + Clustering)
+*(Forward Rendering + Clustering)*
+
+#### Clustered Deferred Rendering 
+
+*(Deferred Rendering + Clustering)*
 
 ## Credits
 
