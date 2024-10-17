@@ -1,15 +1,18 @@
-WebGL Forward+ and Clustered Deferred Shading
-======================
+<img width="999" alt="image" src="https://github.com/user-attachments/assets/c2c60221-5e59-4312-a9f0-2a1c348ec68b">
 
-**University of Pennsylvania, CIS 565: GPU Programming and Architecture, Project 4**
+WebGPU Forward+ and Clustered Deferred Shading
+==============================================
 
-* (TODO) YOUR NAME HERE
-* Tested on: (TODO) **Google Chrome 222.2** on
-  Windows 22, i7-2222 @ 2.22GHz 22GB, GTX 222 222MB (Moore 2222 Lab)
+## 🚀 Overview
+
+> University of Pennsylvania, CIS 5650: GPU Programming and Architecture, Project 3 - CUDA Path Tracer
+> * Michael Mason
+>   + [Personal Website](https://www.michaelmason.xyz/)
+> * Tested on: Windows 11, Ryzen 9 5900HS @ 3.00GHz 16GB, RTX 3080 (Laptop) 8192MB 
 
 ### Live Demo
 
-[![](img/thumb.png)](http://TODO.github.io/Project4-WebGPU-Forward-Plus-and-Clustered-Deferred)
+[See Live Demo Here! (WebGPU Supported Browsers Only)](https://micklemacklemore.github.io/WebGPU-Deferred-Renderer/)
 
 ### Demo Video/GIF
 
@@ -22,6 +25,16 @@ project, and we will not be able to grade you without a good README.
 
 This assignment has a considerable amount of performance analysis compared
 to implementation work. Complete the implementation early to leave time!
+
+## Performance Analysis
+
+```
+Compare your implementations of Forward+ and Clustered Deferred shading and analyze their differences.
+Is one of them faster?
+Is one of them better at certain types of workloads?
+What are the benefits and tradeoffs of using one over the other?
+For any differences in performance, briefly explain what may be causing the difference.
+```
 
 ### Credits
 
