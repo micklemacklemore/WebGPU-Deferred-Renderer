@@ -37,10 +37,10 @@ In my performance analysis I will discuss and compare (in the **[Results](#-resu
 
 #### 1️⃣ Naive Forward Rendering
 
-This is a basic naive forward renderer with none of the optimizations. This is just one vertex/fragment shader program processes the geometry and lighting in a single rendering pass. 
-In the fragment shader, we niavely iterate through every light in the scene to determine the total light contribution of each fragment in the scene. 
+This is a basic naive forward renderer with none of the optimizations. The geometry and lighting is processed in a single rendering pass. 
+In the fragment shader, we niavely iterate through every light in the scene to determine the total light contribution of each fragment in the scene, regardless of whether a light is actually close enough to the fragment to make any sort of light contribution.
 
-This psuedo-code from xxx's blog illustrates it well: 
+This psuedo-code illustrates it well:
 
 ```psuedo
 //Shaders:
