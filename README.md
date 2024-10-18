@@ -41,7 +41,14 @@ For any differences in performance, briefly explain what may be causing the diff
 
 ### 👨‍🔬 Explanation of Clustered and Deferred Implementations
 
-TODO: text here.
+In my performance analysis I will discuss and compare (in the **[Results](#-results)** section) three methods of rendering, which this project implements. 
+
+#### Naive Forward Rendering
+
+#### Clustered Rendering ("Forward Plus")
+
+#### Clustered + Deferred Rendering
+
 
 ### 📊 Results
 
