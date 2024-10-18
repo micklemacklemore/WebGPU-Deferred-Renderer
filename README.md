@@ -173,7 +173,7 @@ It's still not clear what achieves a "sweet spot". Perhaps it depends on the ren
 
 Surprisingly, it was found that the optimal workgroup size (for 24x24x24 clusters) appears to be around 2x2x2, with time per frame dropping to around 38 ms. Beyond this size we see performance plateau and barely change. It doesn't appear that using larger workgroup sizes beyond 2x2x2 offers any substantial benefits. 
 
-The ratio of workgroup size to cluster size may be important here, and it may be beneficial to test workgroup sizes over different cluster configurations. Further research into how WebGPU handles occupancy for compute shaders might be insightful. 
+The ratio of workgroup size to cluster size may be important here, and it may be beneficial to test workgroup sizes over different cluster configurations. Further research into how WebGPU handles occupancy for compute shaders might be insightful (although this is likely to be dependant on the DirectX 12 / Metal / Vulkan backend). 
 
 <div align="center">
   <br>
@@ -181,14 +181,6 @@ The ratio of workgroup size to cluster size may be important here, and it may be
   <p><i>Lower is Better. Frames are rendered at 1920x1080 resolution, 24x24x24 cluster size, and with 4000 lights in the scene.</i></p>
   <br>
 </div>
-
-```
-Compare your implementations of Forward+ and Clustered Deferred shading and analyze their differences.
-Is one of them faster?
-Is one of them better at certain types of workloads?
-What are the benefits and tradeoffs of using one over the other?
-For any differences in performance, briefly explain what may be causing the difference.
-```
 
 ## Credits
 
