@@ -96,7 +96,7 @@ What also seems to vary in this algorithm is how to distribute the cluster divis
 The niave method is dividing the z-depth in NDC space (image on the left). This seems to unevenly distribute the majority of clusters towards the camera's near plane, which is ultimately
 unhelpful as the majority of lights will end up being placed in in the clusters closer to the far-plane. 
 
-Ultimately it would be best to uniformly distribute lights across the clusters, so there is a general understanding logarithmically scaling the z-depth divisions is necessary (as shown in the image on the right). 
+Ultimately it would be best to uniformly distribute lights across the clusters, so there is a general understanding that logarithmically scaling the z-depth divisions is necessary (as shown in the image on the right). 
 In a [SIGGRAPH 2016 Real-Time Rendering Talk for Doom 2016](https://advances.realtimerendering.com/s2016/Siggraph2016_idTech6.pdf), they presented a fairly simple subdivision scheme that I decided to use, and which seems to work pretty well: 
 
 <div align="center">
@@ -106,8 +106,36 @@ In a [SIGGRAPH 2016 Real-Time Rendering Talk for Doom 2016](https://advances.rea
   <br>
 </div>
 
+#### Cluster Visualisation!
+
+<div align="center">
+  <br>
+  <img src="https://github.com/user-attachments/assets/f6d9225a-1a49-4a76-a233-5c432890e0d5" height=400px>
+  <img src="https://github.com/user-attachments/assets/9e1f6271-c321-4b73-a874-ef552e0175da" height=400px>
+  <p><i>First: Each cluster assigned a random color. Second: Each cluster assigned a random color (only in the Z direction)</i></p>
+  <br>
+</div>
+
+
 #### 3️⃣ Clustered + Deferred Rendering
 
+For this renderer, we add the additional optimisation of seperating rendering into a geometry pass and a lighting pass. This is known as [Deferred Shading](https://learnopengl.com/Advanced-Lighting/Deferred-Shading). 
+
+An visual example of deferred shading provided in the image below. A geometry pass may output relevant information such as world-space position, normals, color/albedo and specular (for PBR-based rendering). Then the lighting pass can perform calculations based on the "G-buffer" provided.  
+
+<div align="center">
+  <br>
+  <img src="https://github.com/user-attachments/assets/b6ae78e3-2b15-4761-96b0-3fc9442ce6de" height=400px>
+  <p><i>Source: https://learnopengl.com/Advanced-Lighting/Deferred-Shading</i></p>
+  <br>
+</div>
+
+In our specific implementation, the geometry pass outputs a world-space position pass (`16-bit float RGBA` channels per pixel), a normal pass (`16-bit float RGBA` channels per pixel) and a color/albedo pass (`8-bit unsigned integer` channels per pixel).
+
+There are many ways to implement deferred rendering depending on what you need in your G-Buffer, and more optimized deferred renderers will limit the amount of data in their G-buffer to minimize bandwidth between render-passes. (As an example, as an alternative to a world position pass, we may only need to store the z-depth instead, 
+and calculate the world position in our lighting render pass). 
+
+The major advantage of deferred rendering is that, since the geometry performs that depth-testing of the geometry, the lighting pass is only concerned with fragments that are viewable to the screen. Less fragments to test increases the efficiency of the lighting stage significantly. 
 
 ### 📊 Results
 
