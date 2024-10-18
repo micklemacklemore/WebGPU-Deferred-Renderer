@@ -84,8 +84,8 @@ I use **16x9x24** (that is, 16 divisions in X view-space direction, 9 divisions 
 What also seems to vary in this algorithm is how to distribute the cluster divisions in the Z view-space direction:
 
 <div align="center">
-  <img src="https://github.com/user-attachments/assets/47875c71-d32f-45c6-aa0c-2ca4a2e334ff" height=300px>
-  <img src="https://github.com/user-attachments/assets/df87cb5e-ffd1-490d-ba86-0f7535a2db38" height=300px>
+  <img src="https://github.com/user-attachments/assets/47875c71-d32f-45c6-aa0c-2ca4a2e334ff" height=200px>
+  <img src="https://github.com/user-attachments/assets/df87cb5e-ffd1-490d-ba86-0f7535a2db38" height=200px>
   <p><i>Linear scaling vs Logarithmic scaling.</i></p>
 </div>
 
