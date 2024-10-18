@@ -39,17 +39,46 @@ What are the benefits and tradeoffs of using one over the other?
 For any differences in performance, briefly explain what may be causing the difference.
 ```
 
-### 👨‍🔬 Method
+### 👨‍🔬 Explanation of Clustered and Deferred Implementations
+
+TODO: text here.
 
 ### 📊 Results
 
-#### Clustered "Forward+" Rendering
+TODO: text here.
 
-*(Forward Rendering + Clustering)*
+#### Varying Light Counts
 
-#### Clustered Deferred Rendering 
+TODO: text here.
 
-*(Deferred Rendering + Clustering)*
+<div align="center">
+  <img src="https://github.com/user-attachments/assets/ede17366-3423-467a-b4f2-81d4f88dbf19">
+  <p><i>Lower is Better.</i></p>
+  <br>
+</div>
+
+#### Varying Cluster Size
+
+TODO: text here.
+
+<div align="center">
+  <img src="https://github.com/user-attachments/assets/23476e90-7c71-4ebb-a402-8d5d2fe63ecb">
+  <p><i>Lower is Better.</i></p>
+  <br>
+</div>
+
+#### Varying Workgroup Size
+
+TODO: text here.
+
+<div align="center">
+  <img src="https://github.com/user-attachments/assets/6ab13e44-e0c8-4bfb-90d3-63323a65b028">
+  <p><i>Lower is Better.</i></p>
+  <br>
+</div>
+
+
+
 
 ## Credits
 
