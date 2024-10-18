@@ -31,14 +31,6 @@ https://github.com/user-attachments/assets/cfd5b4da-c825-4aac-a5a3-9921906e8ecb
 
 ## 🤹‍♂️ Performance Analysis
 
-```
-Compare your implementations of Forward+ and Clustered Deferred shading and analyze their differences.
-Is one of them faster?
-Is one of them better at certain types of workloads?
-What are the benefits and tradeoffs of using one over the other?
-For any differences in performance, briefly explain what may be causing the difference.
-```
-
 ### 👨‍🔬 Explanation of Clustered and Deferred Implementations
 
 In my performance analysis I will discuss and compare (in the **[Results](#-results)** section) three methods of rendering, which this project implements. 
@@ -173,6 +165,16 @@ TODO: text here.
   <p><i>Lower is Better.</i></p>
   <br>
 </div>
+
+### 📝 Conclusion
+
+```
+Compare your implementations of Forward+ and Clustered Deferred shading and analyze their differences.
+Is one of them faster?
+Is one of them better at certain types of workloads?
+What are the benefits and tradeoffs of using one over the other?
+For any differences in performance, briefly explain what may be causing the difference.
+```
 
 ## Credits
 
