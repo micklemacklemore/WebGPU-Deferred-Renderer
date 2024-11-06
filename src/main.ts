@@ -2,14 +2,15 @@ import Stats from 'stats.js';
 import { GUI } from 'dat.gui';
 
 import { initWebGPU, Renderer } from './renderer';
-import { NaiveRenderer } from './renderers/naive';
-import { ForwardPlusRenderer } from './renderers/forward_plus';
-import { ClusteredDeferredRenderer } from './renderers/clustered_deferred';
+// import { NaiveRenderer } from './renderers/naive';
+// import { ForwardPlusRenderer } from './renderers/forward_plus';
+// import { ClusteredDeferredRenderer } from './renderers/clustered_deferred';
 
 import { setupLoaders, Scene } from './stage/scene';
 import { Lights } from './stage/lights';
 import { Camera } from './stage/camera';
 import { Stage } from './stage/stage';
+import { JumpFloodRenderer } from './renderers/jump_flood';
 
 await initWebGPU();
 setupLoaders();
@@ -37,23 +38,15 @@ function setRenderer(mode: string) {
     renderer?.stop();
 
     switch (mode) {
-        case renderModes.naive:
-            renderer = new NaiveRenderer(stage);
-            renderer.start(); 
-            break;
-        case renderModes.forwardPlus:
-            renderer = new ForwardPlusRenderer(stage);
-            renderer.start(); 
-            break;
-        case renderModes.clusteredDeferred:
-            renderer = new ClusteredDeferredRenderer(stage);
+        case renderModes.JumpFloodRenderer:
+            renderer = new JumpFloodRenderer(stage);
             renderer.start(); 
             break;
     }
 }
 
-const renderModes = { naive: 'naive', forwardPlus: 'forward+', clusteredDeferred: 'clustered deferred' };
-let renderModeController = gui.add({ mode: renderModes.clusteredDeferred }, 'mode', renderModes);
+const renderModes = { JumpFloodRenderer: 'JumpFloodRenderer' };
+let renderModeController = gui.add({ mode: renderModes.JumpFloodRenderer }, 'mode', renderModes);
 renderModeController.onChange(setRenderer);
 
 setRenderer(renderModeController.getValue());

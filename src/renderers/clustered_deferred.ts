@@ -295,6 +295,7 @@ export class ClusteredDeferredRenderer extends renderer.Renderer {
             renderPass.end(); 
         }
 
+        // run the fullscreen pass
         {
             const fullScreenRenderPassDescriptor : GPURenderPassDescriptor = {
                 label: "fullscreen render pass",
