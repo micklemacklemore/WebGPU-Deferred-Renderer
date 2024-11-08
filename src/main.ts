@@ -2,6 +2,8 @@ import Stats from 'stats.js';
 import { GUI } from 'dat.gui';
 
 import { initWebGPU, Renderer } from './renderer';
+import { JumpFloodRenderer } from './renderers/jump_flood';
+import { Voxelizer } from './renderers/voxelizer';
 // import { NaiveRenderer } from './renderers/naive';
 // import { ForwardPlusRenderer } from './renderers/forward_plus';
 // import { ClusteredDeferredRenderer } from './renderers/clustered_deferred';
@@ -10,7 +12,7 @@ import { setupLoaders, Scene } from './stage/scene';
 import { Lights } from './stage/lights';
 import { Camera } from './stage/camera';
 import { Stage } from './stage/stage';
-import { JumpFloodRenderer } from './renderers/jump_flood';
+
 
 await initWebGPU();
 setupLoaders();
@@ -42,11 +44,15 @@ function setRenderer(mode: string) {
             renderer = new JumpFloodRenderer(stage);
             renderer.start(); 
             break;
+        case renderModes.Voxelizer: 
+            renderer = new Voxelizer(stage); 
+            renderer.start(); 
+            break; 
     }
 }
 
-const renderModes = { JumpFloodRenderer: 'JumpFloodRenderer' };
-let renderModeController = gui.add({ mode: renderModes.JumpFloodRenderer }, 'mode', renderModes);
+const renderModes = {Voxelizer: 'Voxelizer', JumpFloodRenderer: 'JumpFloodRenderer' };
+let renderModeController = gui.add({ mode: renderModes.Voxelizer }, 'mode', renderModes);
 renderModeController.onChange(setRenderer);
 
 setRenderer(renderModeController.getValue());

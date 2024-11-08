@@ -92,7 +92,7 @@ export class Camera {
             usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
         }); 
 
-        this.projMat = mat4.perspective(toRadians(fovYDegrees), aspectRatio, Camera.nearPlane, Camera.farPlane);
+        this.projMat = mat4.ortho(-30, 30, -30, 30, -30, 30);
 
         this.rotateCamera(0, 0); // set initial camera vectors
 
@@ -175,12 +175,40 @@ export class Camera {
         }
     }
 
+    private createViewMatrix(axis : string, direction : string = '+') {
+        const origin = vec3.fromValues(0, 0, 0);
+        let eye;
+    
+        // Determine the 'eye' position based on the axis and direction
+        switch (axis) {
+            case 'x':
+                eye = direction === '+' ? vec3.fromValues(1, 0, 0) : vec3.fromValues(-1, 0, 0);
+                break;
+            case 'y':
+                eye = direction === '+' ? vec3.fromValues(0, 1, 0) : vec3.fromValues(0, -1, 0);
+                break;
+            case 'z':
+                eye = direction === '+' ? vec3.fromValues(0, 0, 1) : vec3.fromValues(0, 0, -1);
+                break;
+            default:
+                throw new Error("Invalid axis. Use 'x', 'y', or 'z'.");
+        }
+    
+        // Determine the 'up' vector to ensure a consistent orientation
+        const up = axis === 'y' ? vec3.fromValues(1, 0, 0) : vec3.fromValues(0, 1, 0);
+    
+        // Create and return the view matrix
+        return mat4.lookAt(eye, origin, up);
+    }
+
     onFrame(deltaTime: number) {
         this.processInput(deltaTime);
 
-        const lookPos = vec3.add(this.cameraPos, vec3.scale(this.cameraFront, 1));
-        const viewMat = mat4.lookAt(this.cameraPos, lookPos, [0, 1, 0]);
+        // creates view matrix from x, y or z axis
+        const viewMat = this.createViewMatrix('y', '+'); 
+
         const viewProjMat = mat4.mul(this.projMat, viewMat);
+        //const viewProjMat = this.projMat; 
         
         this.uniforms.viewProjMat = viewProjMat; 
         this.uniforms.canvasWidth = canvas.width; 

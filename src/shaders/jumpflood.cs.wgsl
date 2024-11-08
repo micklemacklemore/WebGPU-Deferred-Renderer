@@ -37,7 +37,6 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
             }
         }
     }
-
     textureStore(sdfTexture, vec2<i32>(global_id.xy), vec4f(bestDist / uResolution.x, bestDist / uResolution.x, bestDist / uResolution.x, 1.));
 
     // Write the result color for the current pixel to the output texture

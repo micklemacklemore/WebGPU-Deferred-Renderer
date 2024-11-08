@@ -90,12 +90,81 @@ class MikeTexture {
             usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST,
         });
 
+        this.texture.createView()
+
         // Upload the texture data to the GPU texture
         renderer.device.queue.writeTexture(
             { texture: this.texture },
             this.textureData,
             { bytesPerRow: this.kTextureWidth * 4 },
             { width: this.kTextureWidth, height: this.kTextureHeight },
+        );
+
+        // Create the sampler
+        this.sampler = renderer.device.createSampler();
+    }
+}
+
+
+class Texture3D {
+    kTextureX: number;
+    kTextureY: number;
+    kTextureZ: number;
+    textureData: Uint8Array;
+    texture: GPUTexture;
+    sampler: GPUSampler;
+
+    constructor(width: number, height: number, depth: number, cubeSize: number = 10) {
+        this.kTextureX = width;
+        this.kTextureY = height;
+        this.kTextureZ = depth;
+
+        // Initialize the 3D texture data, each voxel has RGBA channels (4 bytes per voxel)
+        this.textureData = new Uint8Array(this.kTextureX * this.kTextureY * this.kTextureZ * 4);
+        this.textureData.fill(0); // Start with all voxels as fully transparent
+
+        // Calculate the center of the texture
+        const centerX = Math.floor(this.kTextureX / 2);
+        const centerY = Math.floor(this.kTextureY / 2);
+        const centerZ = Math.floor(this.kTextureZ / 2);
+
+        // Calculate the bounds of the cube around the center
+        const halfSize = Math.floor(cubeSize / 2);
+        const startX = Math.max(centerX - halfSize, 0);
+        const endX = Math.min(centerX + halfSize, this.kTextureX - 1);
+        const startY = Math.max(centerY - halfSize, 0);
+        const endY = Math.min(centerY + halfSize, this.kTextureY - 1);
+        const startZ = Math.max(centerZ - halfSize, 0);
+        const endZ = Math.min(centerZ + halfSize, this.kTextureZ - 1);
+
+        // Fill the cube in the middle with color and opacity
+        for (let z = startZ; z <= endZ; z++) {
+            for (let y = startY; y <= endY; y++) {
+                for (let x = startX; x <= endX; x++) {
+                    const index = ((z * this.kTextureY * this.kTextureX) + (y * this.kTextureX) + x) * 4;
+                    this.textureData[index] = 255;       // R channel
+                    this.textureData[index + 1] = 255;   // G channel
+                    this.textureData[index + 2] = 255;   // B channel
+                    this.textureData[index + 3] = 255;   // A channel (fully opaque)
+                }
+            }
+        }
+
+        // Create the GPU 3D texture
+        this.texture = renderer.device.createTexture({
+            label: '3D Cube Texture',
+            size: [this.kTextureX, this.kTextureY, this.kTextureZ],
+            dimension: '3d',
+            format: 'rgba8unorm',
+            usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST,
+        });
+
+        // Upload the 3D texture data to the GPU texture
+        renderer.device.queue.writeTexture(
+            { texture: this.texture },
+            this.textureData,
+            { bytesPerRow: this.kTextureX * 4, rowsPerImage: this.kTextureY },
+            { width: this.kTextureX, height: this.kTextureY, depthOrArrayLayers: this.kTextureZ },
         );
 
         // Create the sampler
@@ -112,6 +181,7 @@ export class JumpFloodRenderer extends renderer.Renderer {
     InputTexture : MikeTexture; 
     OutputTexture : GPUTexture; 
     SeedTexture: GPUTexture; 
+    SampleTexture3D: Texture3D; 
 
     /// --- Fullscreen ---
 
@@ -256,6 +326,8 @@ export class JumpFloodRenderer extends renderer.Renderer {
               GPUTextureUsage.TEXTURE_BINDING |
               GPUTextureUsage.COPY_DST | GPUTextureUsage.STORAGE_BINDING
         });
+
+        this.SampleTexture3D = new Texture3D(100, 100, 100); 
 
         // renderer.device.queue.writeTexture(
         //     { texture: this.SeedTexture },
