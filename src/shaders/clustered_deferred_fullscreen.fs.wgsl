@@ -14,5 +14,5 @@ fn main(@builtin(position) coord : vec4f) -> @location(0) vec4f {
     let color : vec4f = textureSample(ourTexture, ourSampler, uv);
     let seeds : vec4f = textureSample(seedTexture, ourSampler, uv); 
 
-    return color + seeds;
+    return seeds;
 }

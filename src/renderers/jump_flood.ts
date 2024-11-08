@@ -3,8 +3,8 @@ import * as shaders from '../shaders/shaders';
 import { Stage } from '../stage/stage';
 
 
-const TEX_WIDTH = 128; 
-const TEX_HEIGHT = 128; 
+const TEX_WIDTH = 1024; 
+const TEX_HEIGHT = 1024; 
 
 interface UniformsViews {
     screenSize: Float32Array; 
@@ -19,7 +19,11 @@ class MikeTexture {
     texture: GPUTexture;
     sampler: GPUSampler;
 
-    constructor(numSeeds: number = 30) { // Allow the number of seeds to be specified
+    constructor(lineThickness: number = 100, lineLength: number = 600, rotationAngle: number = 12) { 
+        // lineThickness: width of each line in pixels
+        // lineLength: length of each line arm in pixels
+        // rotationAngle: rotation angle in degrees
+
         this.kTextureWidth = TEX_WIDTH;
         this.kTextureHeight = TEX_HEIGHT;
 
@@ -27,18 +31,55 @@ class MikeTexture {
         this.textureData = new Uint8Array(this.kTextureWidth * this.kTextureHeight * 4);
         this.textureData.fill(0); // Start with all pixels as fully transparent
 
-        // Set random seed pixels
-        for (let i = 0; i < numSeeds; i++) {
-            // Generate random x and y positions within the texture bounds
-            const x = Math.floor(Math.random() * this.kTextureWidth);
-            const y = Math.floor(Math.random() * this.kTextureHeight);
-            const index = (y * this.kTextureWidth + x) * 4;
+        // Calculate the center of the texture
+        const centerX = Math.floor(this.kTextureWidth / 2);
+        const centerY = Math.floor(this.kTextureHeight / 2);
 
-            // Encode coordinates in normalized form for rgba8unorm
-            this.textureData[index] = Math.floor((x / this.kTextureWidth) * 255); // R
-            this.textureData[index + 1] = Math.floor((y / this.kTextureHeight) * 255); // G
-            this.textureData[index + 2] = 100; // B channel set to max (1.0 normalized)
-            this.textureData[index + 3] = 255; // A channel set to max (1.0 normalized)
+        // Convert rotation angle to radians
+        const angleRad = (rotationAngle * Math.PI) / 180;
+
+        // Helper function to rotate a point (x, y) around the center
+        function rotatePoint(x: number, y: number): { x: number; y: number } {
+            const cosAngle = Math.cos(angleRad);
+            const sinAngle = Math.sin(angleRad);
+            return {
+                x: Math.round(centerX + (x - centerX) * cosAngle - (y - centerY) * sinAngle),
+                y: Math.round(centerY + (x - centerX) * sinAngle + (y - centerY) * cosAngle),
+            };
+        }
+
+        // Draw the vertical line of the plus sign (rotated)
+        for (let i = -Math.floor(lineLength / 2); i <= Math.floor(lineLength / 2); i++) {
+            for (let j = -Math.floor(lineThickness / 2); j <= Math.floor(lineThickness / 2); j++) {
+                const rotatedPos = rotatePoint(centerX + j, centerY + i);
+                const index = (rotatedPos.y * this.kTextureWidth + rotatedPos.x) * 4;
+
+                // Check bounds
+                if (rotatedPos.x >= 0 && rotatedPos.x < this.kTextureWidth && rotatedPos.y >= 0 && rotatedPos.y < this.kTextureHeight) {
+                    // Encode coordinates in normalized form for rgba8unorm
+                    this.textureData[index] = Math.floor((rotatedPos.x / this.kTextureWidth) * 255); // R
+                    this.textureData[index + 1] = Math.floor((rotatedPos.y / this.kTextureHeight) * 255); // G
+                    this.textureData[index + 2] = 100; // B channel for visualization
+                    this.textureData[index + 3] = 255; // A channel to indicate full opacity
+                }
+            }
+        }
+
+        // Draw the horizontal line of the plus sign (rotated)
+        for (let i = -Math.floor(lineLength / 2); i <= Math.floor(lineLength / 2); i++) {
+            for (let j = -Math.floor(lineThickness / 2); j <= Math.floor(lineThickness / 2); j++) {
+                const rotatedPos = rotatePoint(centerX + i, centerY + j);
+                const index = (rotatedPos.y * this.kTextureWidth + rotatedPos.x) * 4;
+
+                // Check bounds
+                if (rotatedPos.x >= 0 && rotatedPos.x < this.kTextureWidth && rotatedPos.y >= 0 && rotatedPos.y < this.kTextureHeight) {
+                    // Encode coordinates in normalized form for rgba8unorm
+                    this.textureData[index] = Math.floor((rotatedPos.x / this.kTextureWidth) * 255); // R
+                    this.textureData[index + 1] = Math.floor((rotatedPos.y / this.kTextureHeight) * 255); // G
+                    this.textureData[index + 2] = 100; // B channel for visualization
+                    this.textureData[index + 3] = 255; // A channel to indicate full opacity
+                }
+            }
         }
 
         // Create the GPU texture
@@ -213,15 +254,15 @@ export class JumpFloodRenderer extends renderer.Renderer {
             format: this.InputTexture.texture.format,
             usage:
               GPUTextureUsage.TEXTURE_BINDING |
-              GPUTextureUsage.COPY_DST
+              GPUTextureUsage.COPY_DST | GPUTextureUsage.STORAGE_BINDING
         });
 
-        renderer.device.queue.writeTexture(
-            { texture: this.SeedTexture },
-            this.InputTexture.textureData,
-            { bytesPerRow: this.InputTexture.kTextureWidth * 4 },
-            { width: this.InputTexture.kTextureWidth, height: this.InputTexture.kTextureHeight },
-        );
+        // renderer.device.queue.writeTexture(
+        //     { texture: this.SeedTexture },
+        //     this.InputTexture.textureData,
+        //     { bytesPerRow: this.InputTexture.kTextureWidth * 4 },
+        //     { width: this.InputTexture.kTextureWidth, height: this.InputTexture.kTextureHeight },
+        // );
 
         
 
@@ -246,6 +287,10 @@ export class JumpFloodRenderer extends renderer.Renderer {
                 {
                     binding: 3,
                     resource: { buffer: this.uStepSizeGPU }
+                }, 
+                {
+                    binding: 4, 
+                    resource: this.SeedTexture.createView()
                 }
             ]
         });
