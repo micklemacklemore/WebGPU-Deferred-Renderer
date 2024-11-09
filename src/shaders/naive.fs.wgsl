@@ -3,8 +3,6 @@
 @group(${bindGroup_material}) @binding(0) var diffuseTex: texture_2d<f32>;
 @group(${bindGroup_material}) @binding(1) var diffuseTexSampler: sampler;
 
-@group(${bindGroup_storage}) @binding(0) var voxelOut: texture_storage_3d<rgba8unorm, write>; 
-
 
 struct FragmentInput
 {
@@ -29,8 +27,5 @@ fn main(in: FragmentInput, @builtin(position) pixelPosition: vec4<f32>) -> @loca
 
     var finalColor = diffuseColor.rgb;
 
-    textureStore(voxelOut, vec3<u32>(vec2<u32>(pixelPosition.xy), u32(pixelPosition.z * 128)), vec4f(finalColor, 1)); 
-
     return vec4(finalColor, 1);
-    //return vec4(in.pos, 1); 
 }

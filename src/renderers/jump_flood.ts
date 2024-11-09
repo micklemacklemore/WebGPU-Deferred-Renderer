@@ -105,7 +105,6 @@ class MikeTexture {
     }
 }
 
-
 class Texture3D {
     kTextureX: number;
     kTextureY: number;
@@ -175,7 +174,6 @@ class Texture3D {
 export class JumpFloodRenderer extends renderer.Renderer {
 
     // -- Textures --
-
     depthTexture: GPUTexture;
     depthTextureView: GPUTextureView;
     InputTexture : MikeTexture; 

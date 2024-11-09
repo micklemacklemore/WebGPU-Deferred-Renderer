@@ -1,6 +1,7 @@
 import * as renderer from '../renderer';
 import * as shaders from '../shaders/shaders';
 import { Stage } from '../stage/stage';
+import { Texture3DViewer } from '../main'; 
 
 class Texture3D {
     kTextureX: number;
@@ -8,7 +9,7 @@ class Texture3D {
     kTextureZ: number;
     textureData: Uint8Array;
     texture: GPUTexture;
-    // sampler: GPUSampler;
+    sampler: GPUSampler;
 
     constructor(width: number, height: number, depth: number) {
         this.kTextureX = width;
@@ -25,7 +26,8 @@ class Texture3D {
             size: [this.kTextureX, this.kTextureY, this.kTextureZ],
             dimension: '3d',
             format: 'rgba8unorm',
-            usage: GPUTextureUsage.STORAGE_BINDING | GPUTextureUsage.COPY_DST,
+            usage: GPUTextureUsage.STORAGE_BINDING | GPUTextureUsage.COPY_DST
+                    | GPUTextureUsage.TEXTURE_BINDING,
         });
 
         // Upload the 3D texture data to the GPU texture
@@ -37,7 +39,29 @@ class Texture3D {
         );
 
         // Create the sampler
-        //this.sampler = renderer.device.createSampler();
+        this.sampler = renderer.device.createSampler();
+    }
+}
+
+class OrthoDir {
+    host : Uint32Array; 
+    device : GPUBuffer; 
+
+    constructor() {
+        this.host = new Uint32Array(1); 
+        this.device = renderer.device.createBuffer({
+            label: "orthoDir buffer", 
+            size: this.host.byteLength, 
+            usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
+        }); 
+
+        this.update(0); 
+    }
+
+    // x : 0, y : 1, z: 2
+    public update(dir: number) {
+        this.host[0] = dir; 
+        renderer.device.queue.writeBuffer(this.device, 0, this.host); 
     }
 }
 
@@ -48,15 +72,31 @@ export class Voxelizer extends renderer.Renderer {
     voxelStorageBindGroupLayout: GPUBindGroupLayout; 
     voxelStorageBindGroup: GPUBindGroup; 
 
-    //depthTexture: GPUTexture;
-    //depthTextureView: GPUTextureView;
+    fullScreenBindGroup: GPUBindGroup; 
 
-    voxelTexture: Texture3D; 
-
+    // voxel pipeline
     pipeline: GPURenderPipeline;
 
-    constructor(stage: Stage) {
+    voxelTexture: Texture3D; 
+    textureView : Texture3DViewer; 
+
+    // this pipeline is just for viewing the texture
+    fullscreenpipeline: GPURenderPipeline; 
+
+    depthTexture: GPUTexture;
+    depthTextureView: GPUTextureView;
+
+    orthoDir : OrthoDir; 
+
+    runOnce: boolean; 
+
+    constructor(stage: Stage, texView: Texture3DViewer) {
         super(stage);
+
+        this.textureView = texView; 
+        this.orthoDir = new OrthoDir(); 
+
+        this.runOnce = true; 
 
         this.sceneUniformsBindGroupLayout = renderer.device.createBindGroupLayout({
             label: "scene uniforms bind group layout",
@@ -98,6 +138,11 @@ export class Voxelizer extends renderer.Renderer {
                     binding: 0,
                     visibility: GPUShaderStage.FRAGMENT,
                     storageTexture: { format: this.voxelTexture.texture.format, viewDimension: '3d' }
+                }, 
+                {
+                    binding: 1,
+                    visibility: GPUShaderStage.FRAGMENT,
+                    buffer: { type: 'uniform' }
                 }
             ]
         });
@@ -109,16 +154,24 @@ export class Voxelizer extends renderer.Renderer {
                 {
                     binding: 0,
                     resource: this.voxelTexture.texture.createView()
+                }, 
+                {
+                    binding: 1, 
+                    resource: { buffer: this.orthoDir.device }
                 }
             ]
         });
 
-        // this.depthTexture = renderer.device.createTexture({
-        //     size: [renderer.canvas.width, renderer.canvas.height],
-        //     format: "depth24plus",
-        //     usage: GPUTextureUsage.RENDER_ATTACHMENT
-        // });
-        // this.depthTextureView = this.depthTexture.createView();
+        // we're not depth culling, so no need to write to depth
+
+        this.depthTexture = renderer.device.createTexture({
+            size: [renderer.canvas.width, renderer.canvas.height],
+            format: "depth24plus",
+            usage: GPUTextureUsage.RENDER_ATTACHMENT
+        });
+        this.depthTextureView = this.depthTexture.createView();
+
+        // create voxel pipeline
 
         this.pipeline = renderer.device.createRenderPipeline({
             layout: renderer.device.createPipelineLayout({
@@ -132,15 +185,15 @@ export class Voxelizer extends renderer.Renderer {
             }),
             vertex: {
                 module: renderer.device.createShaderModule({
-                    label: "naive vert shader",
-                    code: shaders.naiveVertSrc
+                    label: "voxel vert shader",
+                    code: shaders.voxelVertSrc
                 }),
                 buffers: [ renderer.vertexBufferLayout ]
             },
             fragment: {
                 module: renderer.device.createShaderModule({
-                    label: "naive frag shader",
-                    code: shaders.naiveFragSrc,
+                    label: "voxel frag shader",
+                    code: shaders.voxelFragSrc,
                 }),
                 targets: [
                     {
@@ -149,12 +202,79 @@ export class Voxelizer extends renderer.Renderer {
                 ]
             }
         });
+
+        // create full screen pipeline
+        this.fullscreenpipeline = renderer.device.createRenderPipeline({
+            label: "Voxel Fullscreen pipeline",
+            layout: 'auto',
+            depthStencil: {
+                depthWriteEnabled: true,
+                depthCompare: "less",
+                format: "depth24plus"
+            },
+            vertex: {
+                module: renderer.device.createShaderModule({
+                    label: "fullscreen voxel vert shader",
+                    code: shaders.voxelFullScreenVertSrc
+                }),
+            },
+            fragment: {
+                module: renderer.device.createShaderModule({
+                    label: "fullscreen voxel frag shader",
+                    code: shaders.voxelFullscreenFragSrc,
+                }),
+                targets: [
+                    {   
+                        format: renderer.canvasFormat 
+                    }
+                ]
+            }
+        }); 
+
+        this.fullScreenBindGroup = renderer.device.createBindGroup({
+            label: "fullscreen voxel bindgroup", 
+            layout: this.fullscreenpipeline.getBindGroupLayout(0), 
+            entries: [
+                {
+                    binding: 0,
+                    resource: { buffer: this.camera.uniformsGPUBuffer }
+                }, 
+                {
+                    binding: 1, 
+                    resource: { buffer: this.textureView.deviceBuffer }
+                },
+                {
+                    binding: 2, 
+                    resource: this.voxelTexture.sampler
+                }, 
+                {
+                    binding: 3, 
+                    resource: this.voxelTexture.texture.createView()  
+                }
+            ]
+        })
     }
 
-    override draw() {
+    private voxelize() {
+        this.camera.updateOrtho('x'); 
+        this.orthoDir.update(0); 
+        this.voxelPass(); 
+
+        this.camera.updateOrtho('y'); 
+        this.orthoDir.update(1); 
+        this.voxelPass(); 
+
+        this.camera.updateOrtho('z'); 
+        this.orthoDir.update(2); 
+        this.voxelPass(); 
+    }
+
+    private voxelPass() {
         const encoder = renderer.device.createCommandEncoder();
         const canvasTextureView = renderer.context.getCurrentTexture().createView();
 
+        // unfortunately we can't have a renderpass with no color attachments
+        // TODO: can we create a dummy texture for the renderpass? 
         const renderPass = encoder.beginRenderPass({
             label: "naive render pass",
             colorAttachments: [
@@ -166,6 +286,7 @@ export class Voxelizer extends renderer.Renderer {
                 }
             ],
         });
+
         renderPass.setPipeline(this.pipeline);
         renderPass.setViewport(0, 0, 128, 128, 0, 1.0); 
 
@@ -183,6 +304,48 @@ export class Voxelizer extends renderer.Renderer {
         });
 
         renderPass.end();
+
+        renderer.device.queue.submit([encoder.finish()]);
+    }
+
+    override draw() {
+        // I want to run the voxelize step within the draw function, 
+        // otherwise webGPU inspector doesn't capture it
+        if (this.runOnce) {
+            this.voxelize(); 
+            this.runOnce = false; 
+        }
+
+        const encoder = renderer.device.createCommandEncoder();
+        const canvasTextureView = renderer.context.getCurrentTexture().createView();
+
+        {
+            const fullScreenRenderPassDescriptor : GPURenderPassDescriptor = {
+                label: "jump flood render pass",
+                colorAttachments: [
+                    {
+                        view: canvasTextureView,
+                        clearValue: [0, 0, 0, 0],
+                        loadOp: "clear",
+                        storeOp: "store"
+                    }
+                ],
+                depthStencilAttachment: {
+                    view: this.depthTextureView,
+                    depthClearValue: 1.0,
+                    depthLoadOp: "clear",
+                    depthStoreOp: "store"
+                }
+            }; 
+
+            const renderPass = encoder.beginRenderPass(fullScreenRenderPassDescriptor); 
+
+            renderPass.setPipeline(this.fullscreenpipeline); 
+            renderPass.setBindGroup(0, this.fullScreenBindGroup); 
+            renderPass.draw(6); 
+
+            renderPass.end(); 
+        }
 
         renderer.device.queue.submit([encoder.finish()]);
     }

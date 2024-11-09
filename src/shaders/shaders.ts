@@ -18,6 +18,11 @@ import clusteringComputeRaw from './clustering.cs.wgsl?raw';
 
 import jumpFloodComputeRaw from './jumpflood.cs.wgsl?raw';
 
+import voxelVertRaw from './voxel.vs.wgsl?raw'; 
+import voxelFragRaw from './voxel.fs.wgsl?raw'; 
+import voxelFullscreenVertRaw from './voxel_view_fullscreen.vs.wgsl?raw'; 
+import voxelFullscreenFragRaw from './voxel_view_fullscreen.fs.wgsl?raw'; 
+
 // CONSTANTS (for use in shaders)
 // =================================
 
@@ -62,3 +67,7 @@ export const moveLightsComputeSrc: string = processShaderRaw(moveLightsComputeRa
 export const clusteringComputeSrc: string = processShaderRaw(clusteringComputeRaw);
 
 export const jumpfloodComputeSrc: string = processShaderRaw(jumpFloodComputeRaw); 
+export const voxelVertSrc: string = processShaderRaw(voxelVertRaw); 
+export const voxelFragSrc: string = processShaderRaw(voxelFragRaw); 
+export const voxelFullScreenVertSrc: string = processShaderRaw(voxelFullscreenVertRaw); 
+export const voxelFullscreenFragSrc: string = processShaderRaw(voxelFullscreenFragRaw); 

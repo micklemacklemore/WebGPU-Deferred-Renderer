@@ -209,19 +209,43 @@ export class Camera {
         return mat4.lookAt(eye, origin, up);
     }
 
-    onFrame(deltaTime: number) {
-        this.processInput(deltaTime);
+    updateOrtho(orthoDir : string) {
+        //this.processInput(deltaTime);
 
         // creates view matrix from x, y or z axis
 
         let viewMat : Mat4; 
 
         if (this.useOrtho) {
-            viewMat = this.createViewMatrix('x', '+'); 
+            viewMat = this.createViewMatrix(orthoDir, '+'); 
         } else {
             viewMat = mat4.lookAt(this.cameraPos, vec4.add(this.cameraPos, this.cameraFront), vec4.fromValues(0, 1, 0)); 
         }
         
+
+        const viewProjMat = mat4.mul(this.projMat, viewMat);
+        //const viewProjMat = this.projMat; 
+        
+        this.uniforms.viewProjMat = viewProjMat; 
+        this.uniforms.canvasWidth = canvas.width; 
+        this.uniforms.canvasHeight = canvas.height; 
+        this.uniforms.viewMat = viewMat; 
+        this.uniforms.cameraUp = this.cameraUp; 
+        this.uniforms.cameraRight = this.cameraRight; 
+        this.uniforms.fovRadians = toRadians(fovYDegrees); 
+        this.uniforms.aspectRatio = aspectRatio; 
+        this.uniforms.projMatInverse = mat4.inverse(this.projMat); 
+
+        device.queue.writeBuffer(this.uniformsGPUBuffer, 0, this.uniforms.buffer); 
+    }
+
+    onFrame(deltaTime: number) {
+        this.processInput(deltaTime);
+
+        // creates view matrix from x, y or z axis
+
+        let viewMat : Mat4; 
+        viewMat = mat4.lookAt(this.cameraPos, vec4.add(this.cameraPos, this.cameraFront), vec4.fromValues(0, 1, 0)); 
 
         const viewProjMat = mat4.mul(this.projMat, viewMat);
         //const viewProjMat = this.projMat; 

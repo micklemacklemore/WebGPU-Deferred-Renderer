@@ -1,7 +1,7 @@
 import Stats from 'stats.js';
 import { GUI } from 'dat.gui';
 
-import { initWebGPU, Renderer } from './renderer';
+import { initWebGPU, Renderer, device } from './renderer';
 import { JumpFloodRenderer } from './renderers/jump_flood';
 import { Voxelizer } from './renderers/voxelizer';
 import { NaiveRenderer } from './renderers/naive';
@@ -13,6 +13,32 @@ import { Lights } from './stage/lights';
 import { Camera } from './stage/camera';
 import { Stage } from './stage/stage';
 
+export class Texture3DViewer {
+
+    maxLayer : number; 
+    currentLayer : number; 
+
+    hostBuffer : Uint32Array; 
+    deviceBuffer : GPUBuffer; 
+    
+    constructor(depth: number) {
+        this.maxLayer = depth;
+        this.currentLayer = 0; 
+        this.hostBuffer = new Uint32Array(1); 
+        this.deviceBuffer = device.createBuffer({
+            label: "texture viewer buffer",
+            size: this.hostBuffer.byteLength, 
+            usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
+        })
+         
+        this.update(); 
+    }
+
+    public update() {
+        this.hostBuffer[0] = this.currentLayer; 
+        device.queue.writeBuffer(this.deviceBuffer, 0, this.hostBuffer); 
+    }
+}
 
 await initWebGPU();
 setupLoaders();
@@ -22,15 +48,21 @@ await scene.loadGltf('./scenes/sponza/Sponza.gltf');
 
 const camera = new Camera();
 const lights = new Lights(camera);
+const textureview = new Texture3DViewer(128); 
 
 const stats = new Stats();
 stats.showPanel(0);
 document.body.appendChild(stats.dom);
 
 const gui = new GUI();
-gui.add(lights, 'numLights').min(1).max(Lights.maxNumLights).step(1).onChange(() => {
-    lights.updateLightSetUniformNumLights();
-});
+// gui.add(lights, 'numLights').min(1).max(Lights.maxNumLights).step(1).onChange(() => {
+//     lights.updateLightSetUniformNumLights();
+// });
+
+gui.add(textureview, 'currentLayer').min(0).max(textureview.maxLayer).step(1).onChange(() => {
+    textureview.update(); 
+})
+
 
 var renderer: Renderer | undefined;
 
@@ -47,7 +79,7 @@ function setRenderer(mode: string) {
             break;
         case renderModes.Voxelizer: 
             stage = new Stage(scene, lights, new Camera(true), stats); 
-            renderer = new Voxelizer(stage); 
+            renderer = new Voxelizer(stage, textureview); 
             renderer.start(); 
             break; 
         case renderModes.NaiveRender: 
