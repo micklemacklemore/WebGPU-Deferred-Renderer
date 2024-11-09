@@ -4,7 +4,7 @@ import { GUI } from 'dat.gui';
 import { initWebGPU, Renderer } from './renderer';
 import { JumpFloodRenderer } from './renderers/jump_flood';
 import { Voxelizer } from './renderers/voxelizer';
-// import { NaiveRenderer } from './renderers/naive';
+import { NaiveRenderer } from './renderers/naive';
 // import { ForwardPlusRenderer } from './renderers/forward_plus';
 // import { ClusteredDeferredRenderer } from './renderers/clustered_deferred';
 
@@ -32,26 +32,33 @@ gui.add(lights, 'numLights').min(1).max(Lights.maxNumLights).step(1).onChange(()
     lights.updateLightSetUniformNumLights();
 });
 
-const stage = new Stage(scene, lights, camera, stats);
-
 var renderer: Renderer | undefined;
 
 function setRenderer(mode: string) {
     renderer?.stop();
 
+    let stage : Stage; 
+
     switch (mode) {
         case renderModes.JumpFloodRenderer:
+            stage = new Stage(scene, lights, camera, stats);
             renderer = new JumpFloodRenderer(stage);
             renderer.start(); 
             break;
         case renderModes.Voxelizer: 
+            stage = new Stage(scene, lights, new Camera(true), stats); 
             renderer = new Voxelizer(stage); 
+            renderer.start(); 
+            break; 
+        case renderModes.NaiveRender: 
+            stage = new Stage(scene, lights, camera, stats);
+            renderer = new NaiveRenderer(stage); 
             renderer.start(); 
             break; 
     }
 }
 
-const renderModes = {Voxelizer: 'Voxelizer', JumpFloodRenderer: 'JumpFloodRenderer' };
+const renderModes = {Voxelizer: 'Voxelizer', JumpFloodRenderer: 'JumpFloodRenderer', NaiveRender: 'NaiveRender'};
 let renderModeController = gui.add({ mode: renderModes.Voxelizer }, 'mode', renderModes);
 renderModeController.onChange(setRenderer);
 

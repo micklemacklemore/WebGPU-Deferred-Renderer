@@ -2,12 +2,56 @@ import * as renderer from '../renderer';
 import * as shaders from '../shaders/shaders';
 import { Stage } from '../stage/stage';
 
+class Texture3D {
+    kTextureX: number;
+    kTextureY: number;
+    kTextureZ: number;
+    textureData: Uint8Array;
+    texture: GPUTexture;
+    // sampler: GPUSampler;
+
+    constructor(width: number, height: number, depth: number) {
+        this.kTextureX = width;
+        this.kTextureY = height;
+        this.kTextureZ = depth;
+
+        // Initialize the 3D texture data, each voxel has RGBA channels (4 bytes per voxel)
+        this.textureData = new Uint8Array(this.kTextureX * this.kTextureY * this.kTextureZ * 4);
+        this.textureData.fill(0); // Start with all voxels as fully transparent
+
+        // Create the GPU 3D texture
+        this.texture = renderer.device.createTexture({
+            label: 'Voxel Output',
+            size: [this.kTextureX, this.kTextureY, this.kTextureZ],
+            dimension: '3d',
+            format: 'rgba8unorm',
+            usage: GPUTextureUsage.STORAGE_BINDING | GPUTextureUsage.COPY_DST,
+        });
+
+        // Upload the 3D texture data to the GPU texture
+        renderer.device.queue.writeTexture(
+            { texture: this.texture },
+            this.textureData,
+            { bytesPerRow: this.kTextureX * 4, rowsPerImage: this.kTextureY },
+            { width: this.kTextureX, height: this.kTextureY, depthOrArrayLayers: this.kTextureZ },
+        );
+
+        // Create the sampler
+        //this.sampler = renderer.device.createSampler();
+    }
+}
+
 export class Voxelizer extends renderer.Renderer {
     sceneUniformsBindGroupLayout: GPUBindGroupLayout;
     sceneUniformsBindGroup: GPUBindGroup;
 
-    depthTexture: GPUTexture;
-    depthTextureView: GPUTextureView;
+    voxelStorageBindGroupLayout: GPUBindGroupLayout; 
+    voxelStorageBindGroup: GPUBindGroup; 
+
+    //depthTexture: GPUTexture;
+    //depthTextureView: GPUTextureView;
+
+    voxelTexture: Texture3D; 
 
     pipeline: GPURenderPipeline;
 
@@ -45,12 +89,36 @@ export class Voxelizer extends renderer.Renderer {
             ]
         });
 
-        this.depthTexture = renderer.device.createTexture({
-            size: [renderer.canvas.width, renderer.canvas.height],
-            format: "depth24plus",
-            usage: GPUTextureUsage.RENDER_ATTACHMENT
+        this.voxelTexture = new Texture3D(128, 128, 128); 
+
+        this.voxelStorageBindGroupLayout = renderer.device.createBindGroupLayout({
+            label: "voxel storage bind group layout",
+            entries: [
+                { // camera uniforms
+                    binding: 0,
+                    visibility: GPUShaderStage.FRAGMENT,
+                    storageTexture: { format: this.voxelTexture.texture.format, viewDimension: '3d' }
+                }
+            ]
         });
-        this.depthTextureView = this.depthTexture.createView();
+
+        this.voxelStorageBindGroup = renderer.device.createBindGroup({
+            label: "voxel storage bind group",
+            layout: this.voxelStorageBindGroupLayout,
+            entries: [
+                {
+                    binding: 0,
+                    resource: this.voxelTexture.texture.createView()
+                }
+            ]
+        });
+
+        // this.depthTexture = renderer.device.createTexture({
+        //     size: [renderer.canvas.width, renderer.canvas.height],
+        //     format: "depth24plus",
+        //     usage: GPUTextureUsage.RENDER_ATTACHMENT
+        // });
+        // this.depthTextureView = this.depthTexture.createView();
 
         this.pipeline = renderer.device.createRenderPipeline({
             layout: renderer.device.createPipelineLayout({
@@ -58,14 +126,10 @@ export class Voxelizer extends renderer.Renderer {
                 bindGroupLayouts: [
                     this.sceneUniformsBindGroupLayout,
                     renderer.modelBindGroupLayout,
-                    renderer.materialBindGroupLayout
+                    renderer.materialBindGroupLayout, 
+                    this.voxelStorageBindGroupLayout
                 ]
             }),
-            depthStencil: {
-                depthWriteEnabled: true,
-                depthCompare: "less",
-                format: "depth24plus"
-            },
             vertex: {
                 module: renderer.device.createShaderModule({
                     label: "naive vert shader",
@@ -101,16 +165,12 @@ export class Voxelizer extends renderer.Renderer {
                     storeOp: "store"
                 }
             ],
-            depthStencilAttachment: {
-                view: this.depthTextureView,
-                depthClearValue: 1.0,
-                depthLoadOp: "clear",
-                depthStoreOp: "store"
-            }
         });
         renderPass.setPipeline(this.pipeline);
+        renderPass.setViewport(0, 0, 128, 128, 0, 1.0); 
 
         renderPass.setBindGroup(shaders.constants.bindGroup_scene, this.sceneUniformsBindGroup); 
+        renderPass.setBindGroup(shaders.constants.bindGroup_storage, this.voxelStorageBindGroup); 
 
         this.scene.iterate(node => {
             renderPass.setBindGroup(shaders.constants.bindGroup_model, node.modelBindGroup);

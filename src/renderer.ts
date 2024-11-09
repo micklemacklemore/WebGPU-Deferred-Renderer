@@ -49,6 +49,7 @@ export async function initWebGPU() {
     device = await adapter?.requestDevice({
         requiredLimits: {
           maxColorAttachmentBytesPerSample: maxColorAttachmentsBytesPerSample,
+          maxBufferSize: 2147483648
         }
     });
 

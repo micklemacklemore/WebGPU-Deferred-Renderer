@@ -1,4 +1,4 @@
-import { Mat4, mat4, Vec3, vec3 } from "wgpu-matrix";
+import { Mat4, mat4, Vec3, vec3, vec4 } from "wgpu-matrix";
 import { toRadians } from "../math_util";
 import { device, canvas, fovYDegrees, aspectRatio } from "../renderer";
 
@@ -75,12 +75,15 @@ export class Camera {
     moveSpeed: number = 0.004;
     sensitivity: number = 0.15;
 
+    useOrtho: boolean; 
+
     static readonly nearPlane = 0.1;
     static readonly farPlane = 1000;
 
     keys: { [key: string]: boolean } = {};
 
-    constructor () {
+    constructor (useOrtho: boolean = false) {
+        this.useOrtho = useOrtho; 
         // ensure the usage is set to `GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST` since we will be copying to this buffer
         // check `lights.ts` for examples of using `device.createBuffer()`
         //
@@ -92,7 +95,12 @@ export class Camera {
             usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
         }); 
 
-        this.projMat = mat4.ortho(-30, 30, -30, 30, -30, 30);
+        if (useOrtho) {
+            this.projMat = mat4.ortho(-15, 15, -15, 15, -15, 15);
+        } else {
+            this.projMat = mat4.perspective(toRadians(fovYDegrees), aspectRatio, Camera.nearPlane, Camera.farPlane); 
+        }
+        
 
         this.rotateCamera(0, 0); // set initial camera vectors
 
@@ -205,7 +213,15 @@ export class Camera {
         this.processInput(deltaTime);
 
         // creates view matrix from x, y or z axis
-        const viewMat = this.createViewMatrix('y', '+'); 
+
+        let viewMat : Mat4; 
+
+        if (this.useOrtho) {
+            viewMat = this.createViewMatrix('x', '+'); 
+        } else {
+            viewMat = mat4.lookAt(this.cameraPos, vec4.add(this.cameraPos, this.cameraFront), vec4.fromValues(0, 1, 0)); 
+        }
+        
 
         const viewProjMat = mat4.mul(this.projMat, viewMat);
         //const viewProjMat = this.projMat; 
