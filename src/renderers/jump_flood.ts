@@ -283,7 +283,6 @@ export class JumpFloodRenderer extends renderer.Renderer {
 
         renderer.device.queue.writeBuffer(this.UniformsBuffer, 0, this.UniformsValues); 
 
-
         // setup uniforms for compute
 
         this.uResolution = new Float32Array([TEX_WIDTH, TEX_HEIGHT]); 

@@ -14,29 +14,6 @@ struct FragmentInput
     @location(2) uv: vec2f
 }
 
-/*
-
-ivec3 voxelCoord = ivec3(
-    int(depthValue * gridWidth),
-    int(gl_FragCoord.y / viewportHeight * gridHeight),
-    int(gl_FragCoord.x / viewportWidth * gridDepth)
-);
-
-ivec3 voxelCoord = ivec3(
-    int(gl_FragCoord.x / viewportWidth * gridWidth),
-    int(depthValue * gridHeight),
-    int(gl_FragCoord.y / viewportHeight * gridDepth)
-);
-
-ivec3 voxelCoord = ivec3(
-    int(gl_FragCoord.x / viewportWidth * gridWidth),
-    int(gl_FragCoord.y / viewportHeight * gridHeight),
-    int(depthValue * gridDepth)
-);
-
-
-*/
-
 @fragment
 fn main(in: FragmentInput, @builtin(position) pixelPosition: vec4<f32>) -> @location(0) vec4f
 {
@@ -49,6 +26,10 @@ fn main(in: FragmentInput, @builtin(position) pixelPosition: vec4<f32>) -> @loca
     var x : u32; 
     var y : u32; 
     var z : u32; 
+
+    // TODO: Right now, direction is not aligned. So we are picking a general
+    // direction (looking to +Y axis) that seems generally good for sponza.
+    // I think it has something to do with how the orthographic camera is set up
 
     if (orthoDirection == 0) {
         //x = u32(pixelPosition.z * 128); 
@@ -70,8 +51,8 @@ fn main(in: FragmentInput, @builtin(position) pixelPosition: vec4<f32>) -> @loca
     }
 
     let voxelCoord = vec3<u32>(x, y, z); 
+    finalColor = vec3f(voxelCoord) / 128.0; 
     textureStore(voxelOut, voxelCoord, vec4f(finalColor, 1)); 
 
     return vec4(finalColor, 1);
-    //return vec4(in.pos, 1); 
 }

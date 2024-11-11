@@ -17,6 +17,7 @@ import moveLightsComputeRaw from './move_lights.cs.wgsl?raw';
 import clusteringComputeRaw from './clustering.cs.wgsl?raw';
 
 import jumpFloodComputeRaw from './jumpflood.cs.wgsl?raw';
+import jumpFlood3DComputeRaw from './jumpflood3D.cs.wgsl?raw'; 
 
 import voxelVertRaw from './voxel.vs.wgsl?raw'; 
 import voxelFragRaw from './voxel.fs.wgsl?raw'; 
@@ -67,6 +68,7 @@ export const moveLightsComputeSrc: string = processShaderRaw(moveLightsComputeRa
 export const clusteringComputeSrc: string = processShaderRaw(clusteringComputeRaw);
 
 export const jumpfloodComputeSrc: string = processShaderRaw(jumpFloodComputeRaw); 
+export const jumpflood3DComputeSrc: string = processShaderRaw(jumpFlood3DComputeRaw); 
 export const voxelVertSrc: string = processShaderRaw(voxelVertRaw); 
 export const voxelFragSrc: string = processShaderRaw(voxelFragRaw); 
 export const voxelFullScreenVertSrc: string = processShaderRaw(voxelFullscreenVertRaw); 
