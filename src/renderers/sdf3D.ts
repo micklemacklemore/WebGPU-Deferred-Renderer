@@ -3,6 +3,74 @@ import * as shaders from '../shaders/shaders';
 import { Stage } from '../stage/stage';
 import { Texture3DViewer } from '../main'; 
 
+const CUBE_TEST : boolean = false; 
+
+class CubeSampleTexture3D {
+    kTextureX: number;
+    kTextureY: number;
+    kTextureZ: number;
+    textureData: Uint8Array;
+    texture: GPUTexture;
+    sampler: GPUSampler;
+
+    constructor(width: number, height: number, depth: number, cubeSize: number = 10) {
+        this.kTextureX = width;
+        this.kTextureY = height;
+        this.kTextureZ = depth;
+
+        // Initialize the 3D texture data, each voxel has RGBA channels (4 bytes per voxel)
+        this.textureData = new Uint8Array(this.kTextureX * this.kTextureY * this.kTextureZ * 4);
+        this.textureData.fill(0); // Start with all voxels as fully transparent
+
+        // Calculate the center of the texture
+        const centerX = Math.floor(this.kTextureX / 2);
+        const centerY = Math.floor(this.kTextureY / 2);
+        const centerZ = Math.floor(this.kTextureZ / 2);
+
+        // Calculate the bounds of the cube around the center
+        const halfSize = Math.floor(cubeSize / 2);
+        const startX = Math.max(centerX - halfSize, 0);
+        const endX = Math.min(centerX + halfSize, this.kTextureX - 1);
+        const startY = Math.max(centerY - halfSize, 0);
+        const endY = Math.min(centerY + halfSize, this.kTextureY - 1);
+        const startZ = Math.max(centerZ - halfSize, 0);
+        const endZ = Math.min(centerZ + halfSize, this.kTextureZ - 1);
+
+        // Fill the cube in the middle with color and opacity
+        for (let z = startZ; z <= endZ; z++) {
+            for (let y = startY; y <= endY; y++) {
+                for (let x = startX; x <= endX; x++) {
+                    const index = ((z * this.kTextureY * this.kTextureX) + (y * this.kTextureX) + x) * 4;
+                    this.textureData[index] = Math.floor((x / this.kTextureX) * 255); 
+                    this.textureData[index + 1] = Math.floor((y / this.kTextureY) * 255); 
+                    this.textureData[index + 2] = Math.floor((z / this.kTextureZ) * 255);   
+                    this.textureData[index + 3] = 255;   // A channel (fully opaque)
+                }
+            }
+        }
+
+        // Create the GPU 3D texture
+        this.texture = renderer.device.createTexture({
+            label: '3D Cube Texture',
+            size: [this.kTextureX, this.kTextureY, this.kTextureZ],
+            dimension: '3d',
+            format: 'rgba8unorm',
+            usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST,
+        });
+
+        // Upload the 3D texture data to the GPU texture
+        renderer.device.queue.writeTexture(
+            { texture: this.texture },
+            this.textureData,
+            { bytesPerRow: this.kTextureX * 4, rowsPerImage: this.kTextureY },
+            { width: this.kTextureX, height: this.kTextureY, depthOrArrayLayers: this.kTextureZ },
+        );
+
+        // Create the sampler
+        this.sampler = renderer.device.createSampler();
+    }
+}
+
 class Texture3D {
     kTextureX: number;
     kTextureY: number;
@@ -22,11 +90,11 @@ class Texture3D {
 
         // Create the GPU 3D texture
         this.texture = renderer.device.createTexture({
-            label: 'Voxel Output',
+            label: 'Texture3D',
             size: [this.kTextureX, this.kTextureY, this.kTextureZ],
             dimension: '3d',
             format: 'rgba8unorm',
-            usage: GPUTextureUsage.STORAGE_BINDING | GPUTextureUsage.COPY_DST
+            usage: GPUTextureUsage.STORAGE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.COPY_SRC
                     | GPUTextureUsage.TEXTURE_BINDING,
         });
 
@@ -65,28 +133,42 @@ class OrthoDir {
     }
 }
 
-export class Voxelizer extends renderer.Renderer {
-    sceneUniformsBindGroupLayout: GPUBindGroupLayout;
-    sceneUniformsBindGroup: GPUBindGroup;
+export class SDF3D extends renderer.Renderer {
+
+    // voxel pipeline
+    voxelPipeline: GPURenderPipeline;
+    voxelTexture: Texture3D; 
+    textureView : Texture3DViewer; 
 
     voxelStorageBindGroupLayout: GPUBindGroupLayout; 
     voxelStorageBindGroup: GPUBindGroup; 
 
-    fullScreenBindGroup: GPUBindGroup; 
+    sceneUniformsBindGroupLayout: GPUBindGroupLayout;
+    sceneUniformsBindGroup: GPUBindGroup;
 
-    // voxel pipeline
-    pipeline: GPURenderPipeline;
+    orthoDir : OrthoDir; 
 
-    voxelTexture: Texture3D; 
-    textureView : Texture3DViewer; 
+    // jump flood pipeline
+    JumpFloodComputePipeline: GPUComputePipeline; 
+    JumpFloodBindGroup: GPUBindGroup; 
 
-    // this pipeline is just for viewing the texture
+    JumpFlooduResolution: Float32Array; 
+    JumpFlooduResolutionGPU: GPUBuffer; 
+
+    JumpFlooduStepSize: Uint32Array; 
+    JumpFlooduStepSizeGPU: GPUBuffer; 
+
+    JumpFloodVoronoiOutput: Texture3D; 
+    JumpFloodSDFOutput: Texture3D; 
+
+    JumpFloodTestInput: CubeSampleTexture3D; 
+
+    // fullscreen pipeline for viewing 3D texture
     fullscreenpipeline: GPURenderPipeline; 
+    fullScreenBindGroup: GPUBindGroup; 
 
     depthTexture: GPUTexture;
     depthTextureView: GPUTextureView;
-
-    orthoDir : OrthoDir; 
 
     runOnce: boolean; 
 
@@ -95,6 +177,11 @@ export class Voxelizer extends renderer.Renderer {
 
         this.textureView = texView; 
         this.orthoDir = new OrthoDir(); 
+
+        this.JumpFloodVoronoiOutput = new Texture3D(128, 128, 128); 
+        this.JumpFloodSDFOutput = new Texture3D(128, 128, 128); 
+
+        this.JumpFloodTestInput = new CubeSampleTexture3D(128, 128, 128); 
 
         this.runOnce = true; 
 
@@ -162,7 +249,7 @@ export class Voxelizer extends renderer.Renderer {
             ]
         });
 
-        // we're not depth culling, so no need to write to depth
+        // depth texture is only needed for the fullscreen render
 
         this.depthTexture = renderer.device.createTexture({
             size: [renderer.canvas.width, renderer.canvas.height],
@@ -173,9 +260,10 @@ export class Voxelizer extends renderer.Renderer {
 
         // create voxel pipeline
 
-        this.pipeline = renderer.device.createRenderPipeline({
+        this.voxelPipeline = renderer.device.createRenderPipeline({
+            label: "voxel pipeline",
             layout: renderer.device.createPipelineLayout({
-                label: "naive pipeline layout",
+                label: "voxel pipeline layout",
                 bindGroupLayouts: [
                     this.sceneUniformsBindGroupLayout,
                     renderer.modelBindGroupLayout,
@@ -186,14 +274,14 @@ export class Voxelizer extends renderer.Renderer {
             vertex: {
                 module: renderer.device.createShaderModule({
                     label: "voxel vert shader",
-                    code: shaders.voxelDebugVertSrc
+                    code: shaders.voxelVertSrc
                 }),
                 buffers: [ renderer.vertexBufferLayout ]
             },
             fragment: {
                 module: renderer.device.createShaderModule({
                     label: "voxel frag shader",
-                    code: shaders.voxelDebugFragSrc,
+                    code: shaders.voxelFragSrc,
                 }),
                 targets: [
                     {
@@ -249,13 +337,84 @@ export class Voxelizer extends renderer.Renderer {
                 }, 
                 {
                     binding: 3, 
-                    resource: this.voxelTexture.texture.createView()  
+                    resource: this.JumpFloodSDFOutput.texture.createView()  
                 }
             ]
-        })
+        }); 
+
+        // --- jump flood pipeline setup ---
+
+        this.JumpFloodComputePipeline = renderer.device.createComputePipeline({
+            label: "jump flood compute pipeline",
+            layout: 'auto',
+            compute: {
+                module: renderer.device.createShaderModule({
+                    label: "jump flood compute shader",
+                    code: shaders.jumpflood3DComputeSrc
+                }),
+                entryPoint: "main"
+            }
+        });
+
+        // create jump flood shader resources
+
+        this.JumpFlooduResolution = new Float32Array([128, 128, 128]); 
+        this.JumpFlooduResolutionGPU = renderer.device.createBuffer({
+            label: "resolution", 
+            size: this.JumpFlooduResolution.byteLength,
+            usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
+        }); 
+        renderer.device.queue.writeBuffer(this.JumpFlooduResolutionGPU, 0, this.JumpFlooduResolution); 
+
+        this.JumpFlooduStepSize = new Uint32Array([128 / 2]);
+        this.JumpFlooduStepSizeGPU = renderer.device.createBuffer({
+            label: "stepSize", 
+            size: this.JumpFlooduStepSize.byteLength,
+            usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
+        });  
+        renderer.device.queue.writeBuffer(this.JumpFlooduStepSizeGPU, 0, this.JumpFlooduStepSize);
+
+        // create the bind group
+
+        this.JumpFloodBindGroup = renderer.device.createBindGroup({
+            label: "compute group", 
+            layout: this.JumpFloodComputePipeline.getBindGroupLayout(0), 
+            entries: [
+                {
+                    binding: 0, 
+                    // resource: this.voxelTexture.texture.createView()
+                    resource: CUBE_TEST ? this.JumpFloodTestInput.texture.createView() : this.voxelTexture.texture.createView()
+                }, 
+                {
+                    binding: 1,
+                    resource: this.JumpFloodVoronoiOutput.texture.createView()
+                },
+                {
+                    binding: 2,
+                    resource: {buffer: this.JumpFlooduResolutionGPU}
+                }, 
+                {
+                    binding: 3,
+                    resource: { buffer: this.JumpFlooduStepSizeGPU }
+                }, 
+                {
+                    binding: 4, 
+                    resource: this.JumpFloodSDFOutput.texture.createView()
+                }
+            ]
+        });
     }
 
     private voxelize() {
+        // in each pass we update the orthographic camera
+        // to minimize voxel holes, we render the scene
+        // from x, y and z axis and update the same 3D 
+        // texture.
+
+        // TODO: this is not working as it should since the voxels seems to
+        // be misaligned. It's hard to tell because we're rendering sponza
+        // ... sponza is so symettrical it's hard to tell what's going on..
+
         this.camera.updateOrtho('x'); 
         this.orthoDir.update(0); 
         this.voxelPass(); 
@@ -287,7 +446,7 @@ export class Voxelizer extends renderer.Renderer {
             ],
         });
 
-        renderPass.setPipeline(this.pipeline);
+        renderPass.setPipeline(this.voxelPipeline);
         renderPass.setViewport(0, 0, 128, 128, 0, 1.0); 
 
         renderPass.setBindGroup(shaders.constants.bindGroup_scene, this.sceneUniformsBindGroup); 
@@ -308,11 +467,42 @@ export class Voxelizer extends renderer.Renderer {
         renderer.device.queue.submit([encoder.finish()]);
     }
 
+    private jumpFlood() {
+        for (var i = 128 / 2; i >= 1; i /= 2) {
+            this.JumpFlooduStepSize[0] = i; 
+            //console.log(this.uStepSize[0]); 
+            renderer.device.queue.writeBuffer(this.JumpFlooduStepSizeGPU, 0, this.JumpFlooduStepSize);
+
+            const encoder = renderer.device.createCommandEncoder();
+
+            const computePass = encoder.beginComputePass(); 
+            computePass.setPipeline(this.JumpFloodComputePipeline); 
+            computePass.setBindGroup(0, this.JumpFloodBindGroup); 
+            computePass.dispatchWorkgroups(
+                128, 128, 128 
+            ); 
+
+            computePass.end(); 
+            
+            // pass output back to input. (would be better to "ping pong" the textures here)
+            encoder.copyTextureToTexture(
+                { texture: this.JumpFloodVoronoiOutput.texture },
+                { texture: CUBE_TEST ? this.JumpFloodTestInput.texture : this.voxelTexture.texture },
+                [128, 128, 128]
+            );     
+
+            renderer.device.queue.submit([encoder.finish()]);
+        }
+
+        renderer.device.queue.writeBuffer(this.JumpFlooduStepSizeGPU, 0, this.JumpFlooduStepSize);
+    }
+
     override draw() {
         // I want to run the voxelize step within the draw function, 
         // otherwise webGPU inspector doesn't capture it
         if (this.runOnce) {
             this.voxelize(); 
+            this.jumpFlood(); 
             this.runOnce = false; 
         }
 

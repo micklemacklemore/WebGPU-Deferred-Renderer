@@ -3,8 +3,9 @@ import { GUI } from 'dat.gui';
 
 import { initWebGPU, Renderer, device } from './renderer';
 import { JumpFloodRenderer } from './renderers/jump_flood';
-import { Voxelizer } from './renderers/voxelizer';
+import { SDF3D } from './renderers/sdf3D';
 import { NaiveRenderer } from './renderers/naive';
+import { Voxelizer } from './renderers/voxelizer';
 // import { ForwardPlusRenderer } from './renderers/forward_plus';
 // import { ClusteredDeferredRenderer } from './renderers/clustered_deferred';
 
@@ -77,6 +78,11 @@ function setRenderer(mode: string) {
             renderer = new JumpFloodRenderer(stage);
             renderer.start(); 
             break;
+        case renderModes.SDF3D: 
+            stage = new Stage(scene, lights, new Camera(true), stats); 
+            renderer = new SDF3D(stage, textureview); 
+            renderer.start(); 
+            break; 
         case renderModes.Voxelizer: 
             stage = new Stage(scene, lights, new Camera(true), stats); 
             renderer = new Voxelizer(stage, textureview); 
@@ -90,8 +96,8 @@ function setRenderer(mode: string) {
     }
 }
 
-const renderModes = {Voxelizer: 'Voxelizer', JumpFloodRenderer: 'JumpFloodRenderer', NaiveRender: 'NaiveRender'};
-let renderModeController = gui.add({ mode: renderModes.Voxelizer }, 'mode', renderModes);
+const renderModes = {SDF3D: 'SDF3D', Voxelizer: 'Voxelizer', JumpFloodRenderer: 'JumpFloodRenderer', NaiveRender: 'NaiveRender'};
+let renderModeController = gui.add({ mode: renderModes.SDF3D }, 'mode', renderModes);
 renderModeController.onChange(setRenderer);
 
 setRenderer(renderModeController.getValue());

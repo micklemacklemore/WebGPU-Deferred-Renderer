@@ -51,8 +51,7 @@ fn main(in: FragmentInput, @builtin(position) pixelPosition: vec4<f32>) -> @loca
     }
 
     let voxelCoord = vec3<u32>(x, y, z); 
-    
-    finalColor = vec3f(voxelCoord) / 128.0; 
+
     textureStore(voxelOut, voxelCoord, vec4f(finalColor, 1)); 
 
     return vec4(finalColor, 1);

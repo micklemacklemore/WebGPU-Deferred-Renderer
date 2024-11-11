@@ -21,6 +21,10 @@ import jumpFlood3DComputeRaw from './jumpflood3D.cs.wgsl?raw';
 
 import voxelVertRaw from './voxel.vs.wgsl?raw'; 
 import voxelFragRaw from './voxel.fs.wgsl?raw'; 
+
+import voxelDebugVertRaw from './voxel_debug.vs.wgsl?raw'; 
+import voxelDebugFragRaw from './voxel_debug.fs.wgsl?raw'; 
+
 import voxelFullscreenVertRaw from './voxel_view_fullscreen.vs.wgsl?raw'; 
 import voxelFullscreenFragRaw from './voxel_view_fullscreen.fs.wgsl?raw'; 
 
@@ -71,5 +75,7 @@ export const jumpfloodComputeSrc: string = processShaderRaw(jumpFloodComputeRaw)
 export const jumpflood3DComputeSrc: string = processShaderRaw(jumpFlood3DComputeRaw); 
 export const voxelVertSrc: string = processShaderRaw(voxelVertRaw); 
 export const voxelFragSrc: string = processShaderRaw(voxelFragRaw); 
+export const voxelDebugVertSrc: string = processShaderRaw(voxelDebugVertRaw); 
+export const voxelDebugFragSrc: string = processShaderRaw(voxelDebugFragRaw); 
 export const voxelFullScreenVertSrc: string = processShaderRaw(voxelFullscreenVertRaw); 
 export const voxelFullscreenFragSrc: string = processShaderRaw(voxelFullscreenFragRaw); 

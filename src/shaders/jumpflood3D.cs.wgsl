@@ -2,7 +2,7 @@
 @group(0) @binding(1) var uOutput: texture_storage_3d<rgba8unorm, write>; // output texture to store results
 @group(0) @binding(2) var<uniform> uResolution: vec3<f32>; //resolution of the grid (e.g., vec2(N, N))
 @group(0) @binding(3) var<uniform> uStepSize: i32; //current step size (e.g., N/2, then halves each pass)
-@group(0) @binding(4) var sdfTexture: texture_storage_3d<rgba8unorm, write>; 
+@group(0) @binding(4) var sdfTexture: texture_storage_3d<rgba8unorm, write>;
 
 
 @compute @workgroup_size(1, 1, 1)
@@ -44,7 +44,7 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
         }
     }
     textureStore(sdfTexture, vec3<i32>(global_id), vec4f(bestDist / uResolution.x, bestDist / uResolution.x, bestDist / uResolution.x, 1.));
-    
+
 
     // Write the result color for the current pixel to the output texture
     textureStore(uOutput, vec3<i32>(global_id), bestColor);
